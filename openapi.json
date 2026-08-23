@@ -1,0 +1,897 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "totem-checkout backend",
+    "description": "Checkout backend for totem-checkout.",
+    "version": "0.1.0"
+  },
+  "paths": {
+    "/": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Hello-world root endpoint",
+        "operationId": "root__get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Root  Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Simple health check",
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "additionalProperties": true,
+                  "type": "object",
+                  "title": "Response Health Health Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/items": {
+      "get": {
+        "tags": [
+          "items"
+        ],
+        "summary": "List menu items",
+        "operationId": "list_items_items_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ItemResponse"
+                  },
+                  "type": "array",
+                  "title": "Response List Items Items Get"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts": {
+      "post": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Start a new session cart",
+        "operationId": "create_cart_carts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{session_id}": {
+      "get": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Review a cart",
+        "operationId": "get_cart_carts__session_id__get",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{session_id}/items": {
+      "put": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Add an item to a cart",
+        "operationId": "add_cart_item_carts__session_id__items_put",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CartItemRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{session_id}/items/{item_id}": {
+      "delete": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Remove an item from a cart",
+        "operationId": "remove_cart_item_carts__session_id__items__item_id__delete",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Change item quantity (0 removes)",
+        "operationId": "update_cart_item_carts__session_id__items__item_id__patch",
+        "parameters": [
+          {
+            "name": "item_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Item Id"
+            }
+          },
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateQuantityRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders": {
+      "post": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Checkout a cart into an order",
+        "operationId": "create_order_orders_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CheckoutRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}": {
+      "get": {
+        "tags": [
+          "orders"
+        ],
+        "summary": "Fetch an order with its payment attempts",
+        "operationId": "get_order_orders__order_id__get",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OrderResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/orders/{order_id}/payments": {
+      "post": {
+        "tags": [
+          "payments"
+        ],
+        "summary": "Create a payment attempt (simulated)",
+        "operationId": "create_payment_orders__order_id__payments_post",
+        "parameters": [
+          {
+            "name": "order_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "title": "Order Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CartItemRequest": {
+        "properties": {
+          "item_id": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Item Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "quantity"
+        ],
+        "title": "CartItemRequest"
+      },
+      "CartItemResponse": {
+        "properties": {
+          "item_id": {
+            "type": "integer",
+            "title": "Item Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "type": "string",
+            "title": "Unit Price"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "quantity",
+          "unit_price",
+          "total"
+        ],
+        "title": "CartItemResponse"
+      },
+      "CartResponse": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "session_id": {
+            "type": "string",
+            "title": "Session Id"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CartItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "session_id",
+          "items",
+          "total"
+        ],
+        "title": "CartResponse"
+      },
+      "CheckoutRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Session Id"
+          },
+          "customer_name": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Customer Name"
+          },
+          "order_type": {
+            "$ref": "#/components/schemas/OrderType"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id",
+          "customer_name",
+          "order_type"
+        ],
+        "title": "CheckoutRequest"
+      },
+      "CreateCartRequest": {
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Session Id"
+          }
+        },
+        "type": "object",
+        "required": [
+          "session_id"
+        ],
+        "title": "CreateCartRequest"
+      },
+      "CreatePaymentRequest": {
+        "properties": {
+          "method": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          }
+        },
+        "type": "object",
+        "required": [
+          "method"
+        ],
+        "title": "CreatePaymentRequest"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "type": "array",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "title": "HTTPValidationError"
+      },
+      "ItemResponse": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "price": {
+            "type": "string",
+            "title": "Price"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "price",
+          "category"
+        ],
+        "title": "ItemResponse"
+      },
+      "OrderItemResponse": {
+        "properties": {
+          "item_id": {
+            "type": "integer",
+            "title": "Item Id"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "unit_price": {
+            "type": "string",
+            "title": "Unit Price"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          }
+        },
+        "type": "object",
+        "required": [
+          "item_id",
+          "quantity",
+          "unit_price",
+          "total"
+        ],
+        "title": "OrderItemResponse"
+      },
+      "OrderResponse": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "cart_id": {
+            "type": "integer",
+            "title": "Cart Id"
+          },
+          "customer_name": {
+            "type": "string",
+            "title": "Customer Name"
+          },
+          "order_type": {
+            "type": "string",
+            "title": "Order Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "total": {
+            "type": "string",
+            "title": "Total"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OrderItemResponse"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "payments": {
+            "items": {
+              "$ref": "#/components/schemas/PaymentResponse"
+            },
+            "type": "array",
+            "title": "Payments"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "cart_id",
+          "customer_name",
+          "order_type",
+          "status",
+          "total",
+          "items",
+          "payments"
+        ],
+        "title": "OrderResponse"
+      },
+      "OrderType": {
+        "type": "string",
+        "enum": [
+          "EAT_IN",
+          "TAKEAWAY"
+        ],
+        "title": "OrderType"
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "enum": [
+          "PIX",
+          "CREDIT_CARD",
+          "DEBIT_CARD",
+          "CASH"
+        ],
+        "title": "PaymentMethod"
+      },
+      "PaymentResponse": {
+        "properties": {
+          "id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Id"
+          },
+          "order_id": {
+            "type": "integer",
+            "title": "Order Id"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "created_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Created At"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "order_id",
+          "method",
+          "status"
+        ],
+        "title": "PaymentResponse"
+      },
+      "UpdateQuantityRequest": {
+        "properties": {
+          "quantity": {
+            "type": "integer",
+            "minimum": 0.0,
+            "title": "Quantity"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quantity"
+        ],
+        "title": "UpdateQuantityRequest"
+      },
+      "ValidationError": {
+        "properties": {
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "array",
+            "title": "Location"
+          },
+          "msg": {
+            "type": "string",
+            "title": "Message"
+          },
+          "type": {
+            "type": "string",
+            "title": "Error Type"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "ctx": {
+            "type": "object",
+            "title": "Context"
+          }
+        },
+        "type": "object",
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError"
+      }
+    }
+  }
+}

@@ -1,12 +1,15 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
+
+from .payment import Payment
 
 
 class OrderType(StrEnum):
     EAT_IN = "EAT_IN"
     TAKEAWAY = "TAKEAWAY"
+
 
 class OrderStatus(StrEnum):
     PENDING = "PENDING"
@@ -15,10 +18,6 @@ class OrderStatus(StrEnum):
     COMPLETED = "COMPLETED"
     CANCELLED = "CANCELLED"
 
-class PaymentStatus(StrEnum):
-    PENDING = "PENDING"
-    PAID = "PAID"
-    FAILED = "FAILED"
 
 @dataclass
 class OrderItem:
@@ -29,18 +28,19 @@ class OrderItem:
     def total(self) -> Decimal:
         return self.unit_price * Decimal(self.quantity)
 
+
 @dataclass
 class Order:
-    id: int
     cart_id: int
     customer_name: str
     order_type: OrderType
     items: list[OrderItem]
     total: Decimal
     status: OrderStatus = OrderStatus.PENDING
-    payment_status: PaymentStatus = PaymentStatus.PENDING
     created_at: datetime | None = None
     updated_at: datetime | None = None
+    payments: list[Payment] = field(default_factory=list)
+    id: int | None = None
 
     def mark_preparing(self) -> None:
         """Transition from PENDING to PREPARING."""
@@ -65,15 +65,3 @@ class Order:
         if self.status == OrderStatus.COMPLETED:
             raise ValueError("Cannot cancel a completed order")
         self.status = OrderStatus.CANCELLED
-
-    def mark_paid(self) -> None:
-        """Mark payment as successful."""
-        if self.payment_status != PaymentStatus.PENDING:
-            raise ValueError(f"Cannot change payment status from {self.payment_status}")
-        self.payment_status = PaymentStatus.PAID
-
-    def mark_payment_failed(self) -> None:
-        """Mark payment as failed."""
-        if self.payment_status != PaymentStatus.PENDING:
-            raise ValueError(f"Cannot change payment status from {self.payment_status}")
-        self.payment_status = PaymentStatus.FAILED

@@ -32,3 +32,6 @@ Thumbs.db
 .env
 .env.local
 .env.*.local
+
+# Machine-local tool config
+mise.toml

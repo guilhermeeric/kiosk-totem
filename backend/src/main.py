@@ -5,6 +5,7 @@ Run from the project root (backend/) as:
 or just:
     uv run --directory backend python src/main.py
 """
+
 import os
 
 import uvicorn

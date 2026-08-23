@@ -1,4 +1,3 @@
-
 import asyncpg
 
 from src.domain.item import Item

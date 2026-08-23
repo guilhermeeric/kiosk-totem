@@ -13,31 +13,36 @@ class CartItem:
     def total(self) -> Decimal:
         return self.unit_price * Decimal(self.quantity)
 
+
 @dataclass
 class Cart:
-    id: int
     session_id: str
     items: list[CartItem] = field(default_factory=list)
+    id: int | None = None
+
+    # Upper bound keeps per-item totals inside DECIMAL(10,2) for kiosk items.
+    MAX_QUANTITY = 99
 
     def add_item(self, item: Item, quantity: int = 1) -> None:
         """Add an item to the cart. If it already exists, merge quantities."""
         if quantity <= 0:
             raise ValueError("Quantity must be positive")
+        if quantity > self.MAX_QUANTITY:
+            raise ValueError(f"Quantity cannot exceed {self.MAX_QUANTITY}")
+        if item.id is None:
+            raise ValueError("Item must have an id to be added to a cart")
 
         # Look for existing cart item
         for cart_item in self.items:
             if cart_item.item_id == item.id:
-                cart_item.quantity += quantity
+                merged = cart_item.quantity + quantity
+                if merged > self.MAX_QUANTITY:
+                    raise ValueError(f"Quantity cannot exceed {self.MAX_QUANTITY}")
+                cart_item.quantity = merged
                 return
 
         # New item: snapshot the unit price
-        self.items.append(
-            CartItem(
-                item_id=item.id,
-                quantity=quantity,
-                unit_price=item.price
-            )
-        )
+        self.items.append(CartItem(item_id=item.id, quantity=quantity, unit_price=item.price))
 
     def remove_item(self, item_id: int) -> None:
         """Remove an item entirely from the cart."""
@@ -47,6 +52,8 @@ class Cart:
         """Update quantity of an existing item. Remove if quantity reaches 0."""
         if new_quantity < 0:
             raise ValueError("Quantity cannot be negative")
+        if new_quantity > self.MAX_QUANTITY:
+            raise ValueError(f"Quantity cannot exceed {self.MAX_QUANTITY}")
 
         for cart_item in self.items:
             if cart_item.item_id == item_id:

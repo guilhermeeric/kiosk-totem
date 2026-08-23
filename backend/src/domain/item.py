@@ -4,7 +4,7 @@ from decimal import Decimal
 
 @dataclass(frozen=True)
 class Item:
-    id: int
     name: str
     price: Decimal
     category: str
+    id: int | None = None

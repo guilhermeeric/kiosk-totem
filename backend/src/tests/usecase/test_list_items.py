@@ -1,6 +1,7 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from decimal import Decimal
+from unittest.mock import AsyncMock
+
+import pytest
 
 from src.domain.item import Item
 from src.domain.repositories import ItemRepository

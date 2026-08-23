@@ -1,7 +1,6 @@
-
 import asyncpg
 
-from src.domain.order import Order, OrderItem, OrderStatus, OrderType, PaymentStatus
+from src.domain.order import Order, OrderItem, OrderStatus, OrderType
 from src.domain.repositories import OrderRepository
 
 
@@ -16,7 +15,7 @@ class PostgresOrderRepository(OrderRepository):
             """
             SELECT
                 id, cart_id, customer_name, type, total,
-                status, payment_status, created_at, updated_at
+                status, created_at, updated_at
             FROM orders
             WHERE id = $1
             """,
@@ -32,7 +31,6 @@ class PostgresOrderRepository(OrderRepository):
             order_type=OrderType(row["type"]),
             total=row["total"],
             status=OrderStatus(row["status"]),
-            payment_status=PaymentStatus(row["payment_status"]),
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             items=[],  # filled below
@@ -49,30 +47,33 @@ class PostgresOrderRepository(OrderRepository):
             raise ValueError("Cannot create an order with an existing ID. Use update() instead.")
 
         # Insert the order
-        order_id = await self._conn.fetchval(
-            """
-            INSERT INTO orders (
-                cart_id, customer_name, type, total,
-                status, payment_status
+        try:
+            row = await self._conn.fetchrow(
+                """
+                INSERT INTO orders (
+                    cart_id, customer_name, type, total, status
+                )
+                VALUES ($1, $2, $3, $4, $5)
+                RETURNING id, created_at, updated_at
+                """,
+                order.cart_id,
+                order.customer_name,
+                order.order_type.value,
+                order.total,
+                order.status.value,
             )
-            VALUES ($1, $2, $3, $4, $5, $6)
-            RETURNING id
-            """,
-            order.cart_id,
-            order.customer_name,
-            order.order_type.value,
-            order.total,
-            order.status.value,
-            order.payment_status.value,
-        )
-        order.id = order_id  # Update the domain object
+        except asyncpg.UniqueViolationError:
+            # one_order_per_cart: a cart can only be checked out once.
+            raise ValueError("A cart can only be checked out once") from None
+        if row is None:
+            raise ValueError("Order insert returned no row")
+        order.id = row["id"]  # Update the domain object
+        order.created_at = row["created_at"]
+        order.updated_at = row["updated_at"]
 
         # Insert order items
         if order.items:
-            values = [
-                (order_id, oi.item_id, oi.quantity, oi.unit_price)
-                for oi in order.items
-            ]
+            values = [(order.id, oi.item_id, oi.quantity, oi.unit_price) for oi in order.items]
             await self._conn.executemany(
                 """
                 INSERT INTO order_items (order_id, item_id, quantity, unit_price)
@@ -98,15 +99,13 @@ class PostgresOrderRepository(OrderRepository):
                 type = $2,
                 total = $3,
                 status = $4,
-                payment_status = $5,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $6
+            WHERE id = $5
             """,
             order.customer_name,
             order.order_type.value,
             order.total,
             order.status.value,
-            order.payment_status.value,
             order.id,
         )
         if result == "UPDATE 0":
@@ -118,10 +117,7 @@ class PostgresOrderRepository(OrderRepository):
             order.id,
         )
         if order.items:
-            values = [
-                (order.id, oi.item_id, oi.quantity, oi.unit_price)
-                for oi in order.items
-            ]
+            values = [(order.id, oi.item_id, oi.quantity, oi.unit_price) for oi in order.items]
             await self._conn.executemany(
                 """
                 INSERT INTO order_items (order_id, item_id, quantity, unit_price)
@@ -135,7 +131,7 @@ class PostgresOrderRepository(OrderRepository):
             """
             SELECT
                 id, cart_id, customer_name, type, total,
-                status, payment_status, created_at, updated_at
+                status, created_at, updated_at
             FROM orders
             WHERE status = $1
             ORDER BY created_at ASC
@@ -152,7 +148,6 @@ class PostgresOrderRepository(OrderRepository):
                 order_type=OrderType(row["type"]),
                 total=row["total"],
                 status=OrderStatus(row["status"]),
-                payment_status=PaymentStatus(row["payment_status"]),
                 created_at=row["created_at"],
                 updated_at=row["updated_at"],
                 items=[],
