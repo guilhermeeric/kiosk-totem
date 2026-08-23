@@ -52,6 +52,88 @@
         }
       }
     },
+    "/qr": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Render a QR code (SVG) for arbitrary content",
+        "operationId": "qr_qr_get",
+        "parameters": [
+          {
+            "name": "content",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 1024,
+              "title": "Content"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/icons/{key}": {
+      "get": {
+        "tags": [
+          "system"
+        ],
+        "summary": "Resolve an item icon key to a renderable glyph (SVG emoji)",
+        "operationId": "item_icon_icons__key__get",
+        "parameters": [
+          {
+            "name": "key",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Key"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/items": {
       "get": {
         "tags": [
@@ -316,6 +398,43 @@
                 }
               }
             }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/carts/{session_id}/handoff": {
+      "post": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Mark a cart as handed off to another device (QR)",
+        "operationId": "mark_cart_handed_off_carts__session_id__handoff_post",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
           },
           "422": {
             "description": "Validation Error",
@@ -638,6 +757,18 @@
           "total": {
             "type": "string",
             "title": "Total"
+          },
+          "handed_off_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Handed Off At"
           }
         },
         "type": "object",
@@ -736,6 +867,10 @@
           "category": {
             "type": "string",
             "title": "Category"
+          },
+          "icon": {
+            "type": "string",
+            "title": "Icon"
           }
         },
         "type": "object",
@@ -743,7 +878,8 @@
           "id",
           "name",
           "price",
-          "category"
+          "category",
+          "icon"
         ],
         "title": "ItemResponse"
       },

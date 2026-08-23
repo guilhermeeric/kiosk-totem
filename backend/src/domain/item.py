@@ -7,4 +7,5 @@ class Item:
     name: str
     price: Decimal
     category: str
+    icon: str = "plate"
     id: int | None = None

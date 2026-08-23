@@ -1,7 +1,9 @@
 import asyncpg
 
 from src.domain.order import Order, OrderItem, OrderStatus, OrderType
+from src.domain.payment import Payment
 from src.domain.repositories import OrderRepository
+from src.infrastructure.database.payment_repository import payment_from_row
 
 
 class PostgresOrderRepository(OrderRepository):
@@ -36,6 +38,7 @@ class PostgresOrderRepository(OrderRepository):
             items=[],  # filled below
         )
         order.items = await self._load_items(order.id)
+        order.payments = await self._load_payments(order.id)
         return order
 
     async def create(self, order: Order) -> None:
@@ -165,9 +168,22 @@ class PostgresOrderRepository(OrderRepository):
                 items=[],
             )
             order.items = await self._load_items(order.id)
+            order.payments = await self._load_payments(order.id)
             orders.append(order)
 
         return orders
+
+    async def _load_payments(self, order_id: int) -> list[Payment]:
+        rows = await self._conn.fetch(
+            """
+            SELECT id, order_id, method, status, created_at, updated_at
+            FROM payments
+            WHERE order_id = $1
+            ORDER BY id ASC
+            """,
+            order_id,
+        )
+        return [payment_from_row(row) for row in rows]
 
     async def _load_items(self, order_id: int) -> list[OrderItem]:
         rows = await self._conn.fetch(

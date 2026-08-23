@@ -13,9 +13,18 @@ defineEmits<{ add: [itemId: number] }>()
 <template>
   <div class="flex flex-col gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm">
     <div class="flex items-start justify-between gap-2">
-      <div>
-        <h3 class="text-lg font-semibold">{{ item.name }}</h3>
-        <p class="text-sm text-muted-foreground">{{ formatMoney(item.price) }}</p>
+      <div class="flex items-center gap-3">
+        <!-- The icon key is fetched as a resource, like an image reference -->
+        <div
+          v-if="item.icon"
+          class="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-500/15"
+        >
+          <img :src="`/icons/${item.icon}`" :alt="item.name" class="h-9 w-9" />
+        </div>
+        <div>
+          <h3 class="text-lg font-semibold">{{ item.name }}</h3>
+          <p class="text-sm text-muted-foreground">{{ formatMoney(item.price) }}</p>
+        </div>
       </div>
       <button
         class="rounded-full bg-amber-500 p-2.5 text-zinc-950 transition hover:bg-amber-400"

@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from datetime import datetime
 from decimal import Decimal
 
 from .item import Item
@@ -18,6 +19,7 @@ class CartItem:
 class Cart:
     session_id: str
     items: list[CartItem] = field(default_factory=list)
+    handed_off_at: datetime | None = None
     id: int | None = None
 
     # Upper bound keeps per-item totals inside DECIMAL(10,2) for kiosk items.

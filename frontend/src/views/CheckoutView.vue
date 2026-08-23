@@ -4,18 +4,17 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
 
 import { formatMoney } from '../domain/money'
-import { useSession } from '../composables/useSession'
 import { useCart } from '../composables/useCart'
 import { useCheckout } from '../composables/useCheckout'
 import { useItems } from '../composables/useItems'
 import { ApiError } from '../api/client'
 
 const router = useRouter()
-const { customerName } = useSession()
 const { cartQuery } = useCart()
 const { checkoutMutation } = useCheckout()
 const { name } = useItems()
 
+const customerName = ref('')
 const orderType = ref<'EAT_IN' | 'TAKEAWAY'>('EAT_IN')
 const paymentMethod = ref<'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CASH'>('PIX')
 const error = ref('')
@@ -26,9 +25,14 @@ const total = computed(() => cart.value?.total ?? '0')
 
 function pay() {
   error.value = ''
+  const trimmedName = customerName.value.trim()
+  if (!trimmedName) {
+    error.value = 'Please enter your name'
+    return
+  }
   checkoutMutation.mutate(
     {
-      customerName: customerName.value,
+      customerName: trimmedName,
       orderType: orderType.value,
       paymentMethod: paymentMethod.value,
     },
@@ -77,6 +81,17 @@ function pay() {
           <span>Total</span>
           <span>{{ formatMoney(total) }}</span>
         </div>
+      </div>
+
+      <div class="flex flex-col gap-2">
+        <span class="text-muted-foreground">Who's the order for?</span>
+        <input
+          v-model="customerName"
+          autofocus
+          class="w-full rounded-xl border border-input bg-card px-4 py-3 text-lg shadow-sm outline-none ring-amber-500 transition placeholder:text-muted-foreground focus:ring-2"
+          placeholder="Your name"
+          @keyup.enter="pay"
+        />
       </div>
 
       <div class="flex flex-col gap-2">

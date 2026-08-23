@@ -54,6 +54,11 @@ class CartRepository(ABC):
         """
         ...
 
+    @abstractmethod
+    async def mark_handed_off(self, cart_id: int) -> None:
+        """Record that the session was handed off to another device (QR)."""
+        ...
+
 
 class OrderRepository(ABC):
     """Interface for loading and persisting Order aggregates."""
@@ -106,9 +111,4 @@ class PaymentRepository(ABC):
         (enforced by a partial unique index), the existing paid attempt is
         returned instead — idempotent double-pay protection.
         """
-        ...
-
-    @abstractmethod
-    async def list_by_order(self, order_id: int) -> list[Payment]:
-        """Retrieve all payment attempts for an order, oldest first."""
         ...

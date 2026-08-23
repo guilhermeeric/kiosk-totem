@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from datetime import datetime
 
 from pydantic import BaseModel, Field
 
@@ -26,6 +27,7 @@ class CartResponse(BaseModel):
     session_id: str
     items: list[CartItemResponse]
     total: str
+    handed_off_at: datetime | None = None
 
     @classmethod
     def from_domain(cls, cart: Cart) -> "CartResponse":
@@ -34,6 +36,7 @@ class CartResponse(BaseModel):
             session_id=cart.session_id,
             items=[CartItemResponse.from_domain(ci) for ci in cart.items],
             total=str(cart.total()),
+            handed_off_at=cart.handed_off_at,
         )
 
 

@@ -10,7 +10,7 @@ class PostgresItemRepository(ItemRepository):
 
     async def get_by_id(self, item_id: int) -> Item | None:
         row = await self._conn.fetchrow(
-            "SELECT id, name, price, category FROM items WHERE id = $1",
+            "SELECT id, name, price, category, icon FROM items WHERE id = $1",
             item_id,
         )
         if not row:
@@ -20,11 +20,12 @@ class PostgresItemRepository(ItemRepository):
             name=row["name"],
             price=row["price"],
             category=row["category"],
+            icon=row["icon"],
         )
 
     async def list_all(self) -> list[Item]:
         rows = await self._conn.fetch(
-            "SELECT id, name, price, category FROM items ORDER BY category, name"
+            "SELECT id, name, price, category, icon FROM items ORDER BY category, name"
         )
         return [
             Item(
@@ -32,6 +33,7 @@ class PostgresItemRepository(ItemRepository):
                 name=row["name"],
                 price=row["price"],
                 category=row["category"],
+                icon=row["icon"],
             )
             for row in rows
         ]

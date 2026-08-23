@@ -15,13 +15,17 @@ class PostgresCartRepository(CartRepository):
         # cart so concurrent read-modify-write flows serialize instead of
         # losing updates. Harmless in autocommit (read endpoints).
         row = await self._conn.fetchrow(
-            "SELECT id, session_id FROM carts WHERE session_id = $1 FOR UPDATE",
+            "SELECT id, session_id, handed_off_at FROM carts WHERE session_id = $1 FOR UPDATE",
             session_id,
         )
         if not row:
             return None
 
-        cart = Cart(id=row["id"], session_id=row["session_id"])
+        cart = Cart(
+            id=row["id"],
+            session_id=row["session_id"],
+            handed_off_at=row["handed_off_at"],
+        )
         cart.items = await self._load_items(cart.id)
         return cart
 
@@ -52,6 +56,13 @@ class PostgresCartRepository(CartRepository):
                 """,
                 values,
             )
+
+    async def mark_handed_off(self, cart_id: int) -> None:
+        """Record that the session was handed off to another device (QR)."""
+        await self._conn.execute(
+            "UPDATE carts SET handed_off_at = CURRENT_TIMESTAMP WHERE id = $1",
+            cart_id,
+        )
 
     async def update(self, cart: Cart) -> None:
         """

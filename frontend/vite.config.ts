@@ -21,6 +21,8 @@ export default defineConfig({
       '/carts': API_PROXY_TARGET,
       '/orders': API_PROXY_TARGET,
       '/health': API_PROXY_TARGET,
+      '/qr': API_PROXY_TARGET,
+      '/icons': API_PROXY_TARGET,
       '/openapi.json': API_PROXY_TARGET,
     },
   },

@@ -1,13 +1,17 @@
 """HTTP layer: owns the FastAPI application instance and routes."""
 
+import io
 from contextlib import asynccontextmanager
 
 import asyncpg
-from fastapi import Depends, FastAPI, Path
+import segno
+from fastapi import Depends, FastAPI, HTTPException, Path, Query
+from fastapi.responses import Response
 
 from src.domain.order import OrderStatus
 from src.domain.payment import PaymentMethod
 from src.http.exceptions import register_exception_handlers
+from src.http.icons import icon_svg
 from src.http.schemas.cart import (
     CartItemRequest,
     CartResponse,
@@ -39,6 +43,7 @@ from src.usecases.get_cart import GetCart
 from src.usecases.get_order import GetOrder
 from src.usecases.list_items import ListItems
 from src.usecases.list_orders import ListOrders
+from src.usecases.mark_cart_handed_off import MarkCartHandedOff
 from src.usecases.remove_cart_item import RemoveCartItem
 from src.usecases.transition_order_status import TransitionOrderStatus
 from src.usecases.update_cart_item import UpdateCartItem
@@ -84,6 +89,30 @@ def root() -> dict:
 @app.get("/health", tags=["system"], summary="Simple health check")
 def health() -> dict:
     return {"status": "ok"}
+
+
+@app.get(
+    "/qr",
+    tags=["system"],
+    summary="Render a QR code (SVG) for arbitrary content",
+)
+def qr(content: str = Query(min_length=1, max_length=1024)) -> Response:
+    code = segno.make(content, error="m")
+    buf = io.BytesIO()
+    code.save(buf, kind="svg", xmldecl=False, omitsize=True)
+    return Response(content=buf.getvalue(), media_type="image/svg+xml")
+
+
+@app.get(
+    "/icons/{key}",
+    tags=["system"],
+    summary="Resolve an item icon key to a renderable glyph (SVG emoji)",
+)
+def item_icon(key: str) -> Response:
+    svg = icon_svg(key)
+    if svg is None:
+        raise HTTPException(status_code=404, detail=f"Icon {key!r} not found")
+    return Response(content=svg, media_type="image/svg+xml")
 
 
 # ---- Items (menu) ----
@@ -182,6 +211,21 @@ async def update_cart_item(
     return CartResponse.from_domain(cart)
 
 
+@app.post(
+    "/carts/{session_id}/handoff",
+    status_code=204,
+    tags=["carts"],
+    summary="Mark a cart as handed off to another device (QR)",
+)
+async def mark_cart_handed_off(
+    session_id: str = _SessionPath,
+    conn: asyncpg.Connection = Depends(get_connection),
+) -> Response:
+    repos = _repos(conn)
+    await MarkCartHandedOff(repos["cart"]).execute(session_id)
+    return Response(status_code=204)
+
+
 # ---- Orders ----
 
 
@@ -218,8 +262,7 @@ async def get_order(
     order_id: int,
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> OrderResponse:
-    repos = _repos(conn)
-    order = await GetOrder(repos["order"], repos["payment"]).execute(order_id)
+    order = await GetOrder(_repos(conn)["order"]).execute(order_id)
     return OrderResponse.from_domain(order)
 
 

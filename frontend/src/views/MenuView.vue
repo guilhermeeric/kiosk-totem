@@ -1,19 +1,24 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { ArrowRight, ShoppingBag } from 'lucide-vue-next'
+import { ArrowRight, ShoppingBag, Smartphone } from 'lucide-vue-next'
 import { useRouter } from 'vue-router'
 
 import type { components } from '../domain/api'
 import { formatMoney } from '../domain/money'
 import { useItems } from '../composables/useItems'
 import { useCart } from '../composables/useCart'
+import { useSession } from '../composables/useSession'
 import ItemCard from '../components/ItemCard.vue'
+import HandoffOverlay from '../components/HandoffOverlay.vue'
 
 type Item = components['schemas']['ItemResponse']
 
 const router = useRouter()
 const { itemsQuery } = useItems()
 const { cartQuery, addItem } = useCart()
+const { sessionId } = useSession()
+
+const showHandoff = ref(false)
 
 const categories = computed(() => {
   const groups = new Map<string, Item[]>()
@@ -58,6 +63,13 @@ const cartTotal = computed(() => cartQuery.data.value?.total ?? '0')
       <div class="flex items-center gap-2 pb-3">
         <ShoppingBag class="h-6 w-6 text-amber-500" />
         <span class="text-xl font-bold">Totem</span>
+        <button
+          class="ml-auto flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-semibold transition hover:bg-accent"
+          @click="showHandoff = true"
+        >
+          <Smartphone class="h-4 w-4" />
+          Continue on phone
+        </button>
       </div>
       <nav class="-mx-6 flex gap-2 overflow-x-auto px-6 pb-3">
         <template v-if="itemsQuery.isPending.value">
@@ -118,5 +130,11 @@ const cartTotal = computed(() => cartQuery.data.value?.total ?? '0')
         <ArrowRight class="h-7 w-7" />
       </button>
     </footer>
+
+    <HandoffOverlay
+      v-if="showHandoff"
+      :session-id="sessionId"
+      @close="showHandoff = false"
+    />
   </div>
 </template>

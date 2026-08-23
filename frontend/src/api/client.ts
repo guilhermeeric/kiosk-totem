@@ -34,6 +34,7 @@ async function request<T>(path: string, init?: RequestInit): Promise<T> {
     const message = typeof detail === 'string' ? detail : `Request failed (${res.status})`
     throw new ApiError(res.status, message)
   }
+  if (res.status === 204) return undefined as T
   return res.json() as Promise<T>
 }
 
@@ -51,6 +52,11 @@ export const api = {
     }),
 
   getCart: (sessionId: string) => request<CartResponse>(`/carts/${encodeURIComponent(sessionId)}`),
+
+  markHandedOff: (sessionId: string) =>
+    request<void>(`/carts/${encodeURIComponent(sessionId)}/handoff`, {
+      method: 'POST',
+    }),
 
   addCartItem: (sessionId: string, itemId: number, quantity: number) =>
     request<CartResponse>(`/carts/${encodeURIComponent(sessionId)}/items`, {
