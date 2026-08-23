@@ -76,18 +76,21 @@ class CheckoutInput:
     session_id: str
     customer_name: str
     order_type: OrderType
+    payment_method: PaymentMethod
 
 
 class CheckoutRequest(BaseModel):
     session_id: str = Field(min_length=1, max_length=255)
     customer_name: str = Field(min_length=1, max_length=100)
     order_type: OrderType
+    payment_method: PaymentMethod
 
     def to_domain(self) -> CheckoutInput:
         return CheckoutInput(
             session_id=self.session_id,
             customer_name=self.customer_name,
             order_type=self.order_type,
+            payment_method=self.payment_method,
         )
 
 

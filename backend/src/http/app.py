@@ -195,8 +195,11 @@ async def create_order(
     input_ = payload.to_domain()
     repos = _repos(conn)
     async with conn.transaction():
-        order = await Checkout(repos["cart"], repos["order"]).execute(
-            input_.session_id, input_.customer_name, input_.order_type
+        order = await Checkout(repos["cart"], repos["order"], repos["payment"]).execute(
+            input_.session_id,
+            input_.customer_name,
+            input_.order_type,
+            input_.payment_method,
         )
     return OrderResponse.from_domain(order)
 

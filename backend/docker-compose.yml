@@ -49,5 +49,19 @@ services:
       - ./src:/app/src
       - ./pyproject.toml:/app/pyproject.toml
 
+  frontend:
+    image: node:22-alpine
+    working_dir: /app
+    volumes:
+      - ../frontend:/app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_PROXY: http://backend:8000
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0"
+    depends_on:
+      backend:
+        condition: service_started
+
 volumes:
   postgres_data:

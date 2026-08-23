@@ -26,7 +26,7 @@ class PostgresPaymentRepository(PaymentRepository):
                 """
                 INSERT INTO payments (order_id, method, status)
                 VALUES ($1, $2, $3)
-                RETURNING id, created_at, updated_at
+                RETURNING id, order_id, method, status, created_at, updated_at
                 """,
                 payment.order_id,
                 payment.method.value,

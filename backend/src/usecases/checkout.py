@@ -1,16 +1,34 @@
 from src.domain.exceptions import CartNotFound
 from src.domain.order import Order, OrderItem, OrderType
-from src.domain.repositories import CartRepository, OrderRepository
+from src.domain.payment import PaymentMethod
+from src.domain.repositories import CartRepository, OrderRepository, PaymentRepository
+from src.usecases.create_payment_attempt import CreatePaymentAttempt
 
 
 class Checkout:
-    """Convert a cart into an order and consume the cart."""
+    """Convert a cart into an order with its payment attempt, atomically.
 
-    def __init__(self, cart_repo: CartRepository, order_repo: OrderRepository):
+    The order and the (simulated) payment are created inside the same
+    transaction, so an order only ever exists once it has been paid.
+    """
+
+    def __init__(
+        self,
+        cart_repo: CartRepository,
+        order_repo: OrderRepository,
+        payment_repo: PaymentRepository,
+    ):
         self._cart_repo = cart_repo
         self._order_repo = order_repo
+        self._payment_repo = payment_repo
 
-    async def execute(self, session_id: str, customer_name: str, order_type: OrderType) -> Order:
+    async def execute(
+        self,
+        session_id: str,
+        customer_name: str,
+        order_type: OrderType,
+        payment_method: PaymentMethod,
+    ) -> Order:
         cart = await self._cart_repo.get_by_session_id(session_id)
         if cart is None:
             raise CartNotFound(f"Cart for session {session_id!r} not found")
@@ -35,4 +53,10 @@ class Checkout:
         )
 
         await self._order_repo.create(order)
+        if order.id is None:
+            raise ValueError("Order has no id; payment cannot be created")
+        payment = await CreatePaymentAttempt(self._order_repo, self._payment_repo).execute(
+            order.id, payment_method
+        )
+        order.payments = [payment]
         return order
