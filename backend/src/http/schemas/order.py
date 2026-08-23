@@ -3,7 +3,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field
 
-from src.domain.order import Order, OrderItem, OrderType
+from src.domain.order import Order, OrderItem, OrderStatus, OrderType
 from src.domain.payment import Payment, PaymentMethod
 
 
@@ -99,3 +99,10 @@ class CreatePaymentRequest(BaseModel):
 
     def to_domain(self) -> PaymentMethod:
         return self.method
+
+
+class UpdateOrderStatusRequest(BaseModel):
+    status: OrderStatus
+
+    def to_domain(self) -> OrderStatus:
+        return self.status

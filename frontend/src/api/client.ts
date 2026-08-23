@@ -6,6 +6,7 @@ type OrderResponse = components['schemas']['OrderResponse']
 type OrderType = components['schemas']['OrderType']
 type PaymentMethod = components['schemas']['PaymentMethod']
 type PaymentResponse = components['schemas']['PaymentResponse']
+type OrderStatus = components['schemas']['OrderStatus']
 
 export class ApiError extends Error {
   readonly status: number
@@ -86,4 +87,13 @@ export const api = {
     }),
 
   getOrder: (orderId: number) => request<OrderResponse>(`/orders/${orderId}`),
+
+  listOrders: (status: OrderStatus) =>
+    request<OrderResponse[]>(`/orders?status=${encodeURIComponent(status)}`),
+
+  updateOrderStatus: (orderId: number, status: OrderStatus) =>
+    request<OrderResponse>(`/orders/${orderId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status }),
+    }),
 }

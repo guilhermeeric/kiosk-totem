@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 import asyncpg
 from fastapi import Depends, FastAPI, Path
 
+from src.domain.order import OrderStatus
 from src.domain.payment import PaymentMethod
 from src.http.exceptions import register_exception_handlers
 from src.http.schemas.cart import (
@@ -19,6 +20,7 @@ from src.http.schemas.order import (
     CreatePaymentRequest,
     OrderResponse,
     PaymentResponse,
+    UpdateOrderStatusRequest,
 )
 from src.infrastructure.database import (
     PostgresCartRepository,
@@ -36,7 +38,9 @@ from src.usecases.create_payment_attempt import CreatePaymentAttempt
 from src.usecases.get_cart import GetCart
 from src.usecases.get_order import GetOrder
 from src.usecases.list_items import ListItems
+from src.usecases.list_orders import ListOrders
 from src.usecases.remove_cart_item import RemoveCartItem
+from src.usecases.transition_order_status import TransitionOrderStatus
 from src.usecases.update_cart_item import UpdateCartItem
 
 
@@ -216,6 +220,37 @@ async def get_order(
 ) -> OrderResponse:
     repos = _repos(conn)
     order = await GetOrder(repos["order"], repos["payment"]).execute(order_id)
+    return OrderResponse.from_domain(order)
+
+
+@app.get(
+    "/orders",
+    response_model=list[OrderResponse],
+    tags=["orders"],
+    summary="List orders by status (kitchen columns, visor queue)",
+)
+async def list_orders(
+    status: OrderStatus,
+    conn: asyncpg.Connection = Depends(get_connection),
+) -> list[OrderResponse]:
+    repos = _repos(conn)
+    orders = await ListOrders(repos["order"]).execute(status)
+    return [OrderResponse.from_domain(order) for order in orders]
+
+
+@app.patch(
+    "/orders/{order_id}/status",
+    response_model=OrderResponse,
+    tags=["orders"],
+    summary="Transition an order's status (PENDING → PREPARING → READY → COMPLETED)",
+)
+async def update_order_status(
+    order_id: int,
+    payload: UpdateOrderStatusRequest,
+    conn: asyncpg.Connection = Depends(get_connection),
+) -> OrderResponse:
+    repos = _repos(conn)
+    order = await TransitionOrderStatus(repos["order"]).execute(order_id, payload.to_domain())
     return OrderResponse.from_domain(order)
 
 

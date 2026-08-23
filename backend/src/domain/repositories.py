@@ -83,6 +83,11 @@ class OrderRepository(ABC):
         ...
 
     @abstractmethod
+    async def update_status(self, order_id: int, status: OrderStatus) -> None:
+        """Update only the status of an order (kitchen/visor transitions)."""
+        ...
+
+    @abstractmethod
     async def list_by_status(self, status: OrderStatus) -> list[Order]:
         """Retrieve all orders matching a given status (e.g., for the kitchen display)."""
         ...

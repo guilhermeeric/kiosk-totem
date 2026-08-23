@@ -60,7 +60,9 @@ function paymentKey(p: { id: number | null; method: string }): string {
           :style="{ width: `${progress}%` }"
         />
       </div>
-      <p class="text-center text-muted-foreground">Preparing your order...</p>
+      <p class="text-center text-muted-foreground">
+        Order sent to the kitchen — watch the screen for your number
+      </p>
     </div>
 
     <div class="flex flex-col gap-2 rounded-xl border border-border bg-card p-4 shadow-sm">

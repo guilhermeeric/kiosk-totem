@@ -131,7 +131,8 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        get?: never;
+        /** List orders by status (kitchen columns, visor queue) */
+        get: operations["list_orders_orders_get"];
         put?: never;
         /** Checkout a cart into an order */
         post: operations["create_order_orders_post"];
@@ -156,6 +157,23 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/orders/{order_id}/status": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Transition an order's status (PENDING → PREPARING → READY → COMPLETED) */
+        patch: operations["update_order_status_orders__order_id__status_patch"];
         trace?: never;
     };
     "/orders/{order_id}/payments": {
@@ -277,6 +295,11 @@ export interface components {
             payments: components["schemas"]["PaymentResponse"][];
         };
         /**
+         * OrderStatus
+         * @enum {string}
+         */
+        OrderStatus: "PENDING" | "PREPARING" | "READY" | "COMPLETED" | "CANCELLED";
+        /**
          * OrderType
          * @enum {string}
          */
@@ -300,6 +323,10 @@ export interface components {
             created_at?: string | null;
             /** Updated At */
             updated_at?: string | null;
+        };
+        /** UpdateOrderStatusRequest */
+        UpdateOrderStatusRequest: {
+            status: components["schemas"]["OrderStatus"];
         };
         /** UpdateQuantityRequest */
         UpdateQuantityRequest: {
@@ -559,6 +586,37 @@ export interface operations {
             };
         };
     };
+    list_orders_orders_get: {
+        parameters: {
+            query: {
+                status: components["schemas"]["OrderStatus"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     create_order_orders_post: {
         parameters: {
             query?: never;
@@ -602,6 +660,41 @@ export interface operations {
             cookie?: never;
         };
         requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OrderResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_order_status_orders__order_id__status_patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                order_id: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UpdateOrderStatusRequest"];
+            };
+        };
         responses: {
             /** @description Successful Response */
             200: {

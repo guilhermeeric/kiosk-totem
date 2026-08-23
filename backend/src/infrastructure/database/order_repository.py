@@ -126,6 +126,18 @@ class PostgresOrderRepository(OrderRepository):
                 values,
             )
 
+    async def update_status(self, order_id: int, status: OrderStatus) -> None:
+        """Update only the status of an order (kitchen/visor transitions)."""
+        await self._conn.execute(
+            """
+            UPDATE orders
+            SET status = $2, updated_at = CURRENT_TIMESTAMP
+            WHERE id = $1
+            """,
+            order_id,
+            status.value,
+        )
+
     async def list_by_status(self, status: OrderStatus) -> list[Order]:
         rows = await self._conn.fetch(
             """
