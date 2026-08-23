@@ -1,0 +1,10 @@
+[project]
+name = "totem-checkout-backend"
+version = "0.1.0"
+description = "Backend for totem-checkout (FastAPI + uvicorn)"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+]
