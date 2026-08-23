@@ -9,8 +9,6 @@ import os
 
 import uvicorn
 
-from src.http.app import app  # noqa: F401  (imported so uvicorn string target resolves)
-
 HOST = os.getenv("APP_HOST", "0.0.0.0")
 PORT = int(os.getenv("APP_PORT", "8000"))
 RELOAD = os.getenv("APP_RELOAD", "false").lower() in {"1", "true", "yes"}
@@ -18,7 +16,7 @@ RELOAD = os.getenv("APP_RELOAD", "false").lower() in {"1", "true", "yes"}
 
 def run() -> None:
     uvicorn.run(
-        "src.http.app:app",  # string target so --reload works
+        "src.http.app:app",
         host=HOST,
         port=PORT,
         reload=RELOAD,

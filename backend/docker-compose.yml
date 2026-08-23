@@ -1,0 +1,53 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: totem
+      POSTGRES_PASSWORD: totem
+      POSTGRES_DB: totem
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U totem"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  liquibase:
+    image: liquibase/liquibase:4.28
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src/infrastructure/database/migrations:/liquibase/changelog
+    environment:
+      LIQUIBASE_COMMAND_URL: jdbc:postgresql://db:5432/totem
+      LIQUIBASE_COMMAND_USERNAME: totem
+      LIQUIBASE_COMMAND_PASSWORD: totem
+      LIQUIBASE_COMMAND_CHANGELOG_FILE: changelog/main.xml
+    command: ["update"]
+
+  backend:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      APP_HOST: 0.0.0.0
+      APP_PORT: 8000
+      APP_RELOAD: "true"
+      DATABASE_URL: postgresql://totem:totem@db:5432/totem
+    depends_on:
+      liquibase:
+        condition: service_completed_successfully
+      db:
+        condition: service_healthy
+    volumes:
+      - ./src:/app/src
+      - ./pyproject.toml:/app/pyproject.toml
+
+volumes:
+  postgres_data:
