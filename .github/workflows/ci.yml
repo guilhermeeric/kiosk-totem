@@ -1,0 +1,92 @@
+name: CI
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Lint + tests
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: totem
+          POSTGRES_PASSWORD: totem
+          POSTGRES_DB: totem
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U totem"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgresql://totem:totem@localhost:5432/totem
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: "3.12"
+      - name: Backend lint
+        working-directory: backend
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Apply migrations to test database
+        working-directory: backend
+        run: |
+          uv run python - <<'EOF'
+          import asyncio
+          import os
+          import pathlib
+
+          import asyncpg
+
+          async def main():
+              conn = await asyncpg.connect(os.environ["TEST_DATABASE_URL"])
+              for file in (
+                  "src/infrastructure/database/migrations/001_schema.sql",
+                  "src/infrastructure/database/migrations/002_seed_items.sql",
+              ):
+                  await conn.execute(pathlib.Path(file).read_text())
+              await conn.close()
+
+          asyncio.run(main())
+          EOF
+      - name: Backend tests
+        working-directory: backend
+        run: uv run pytest -q
+      - name: Frontend tests
+        working-directory: frontend
+        run: |
+          npm ci
+          npm test
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build backend image
+        working-directory: backend
+        run: docker build -t totem-backend:ci .
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Build frontend
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
+
+  deploy:
+    name: Deploy (fake - manual)
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Fake deploy
+        run: echo "Deploying - placeholder until a real target exists"
