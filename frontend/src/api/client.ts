@@ -6,7 +6,6 @@ type OrderResponse = components['schemas']['OrderResponse']
 type OrderType = components['schemas']['OrderType']
 type PaymentMethod = components['schemas']['PaymentMethod']
 type PaymentStatus = components['schemas']['PaymentStatus']
-type PaymentResponse = components['schemas']['PaymentResponse']
 type OrderStatus = components['schemas']['OrderStatus']
 
 export class ApiError extends Error {
@@ -86,12 +85,6 @@ export const api = {
     request<OrderResponse>('/orders', {
       method: 'POST',
       body: JSON.stringify(input),
-    }),
-
-  createPayment: (orderId: number, method: PaymentMethod, paymentStatus?: PaymentStatus) =>
-    request<PaymentResponse>(`/orders/${orderId}/payments`, {
-      method: 'POST',
-      body: JSON.stringify({ method, payment_status: paymentStatus }),
     }),
 
   getOrder: (orderId: number) => request<OrderResponse>(`/orders/${orderId}`),

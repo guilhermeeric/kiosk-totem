@@ -6,7 +6,7 @@ import { buildQrUrl, buildTrackUrl } from '../domain/handoff'
 import { formatMoney } from '../domain/money'
 import { useCart } from '../composables/useCart'
 import { useSession } from '../composables/useSession'
-import { useOrder } from '../composables/usePayment'
+import { useOrder } from '../composables/useOrder'
 import { useItems } from '../composables/useItems'
 
 const props = defineProps<{ id: string }>()

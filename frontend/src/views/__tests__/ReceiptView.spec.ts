@@ -19,7 +19,7 @@ const errorRef = ref<unknown>(null)
 
 const cartData = ref<{ id: number; handed_off_at?: string | null }>({ id: 7, handed_off_at: null })
 
-vi.mock('../../composables/usePayment', () => ({ useOrder }))
+vi.mock('../../composables/useOrder', () => ({ useOrder }))
 vi.mock('../../composables/useCart', () => ({
   useCart: () => ({ cartQuery: { data: cartData } }),
 }))

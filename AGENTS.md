@@ -10,7 +10,7 @@ Self-service checkout ("totem") for a fast-food kiosk: browse menu → build
 cart → simulated payment → order → kitchen/visor status flow → tracking, with
 QR handoff between the kiosk and a phone. Backend: FastAPI + asyncpg +
 PostgreSQL, clean architecture under `backend/src/`. Frontend: Vue 3 + Vite +
-TypeScript under `frontend/` (Tailwind v4 + shadcn-vue, TanStack Query, vitest).
+TypeScript under `frontend/` (Tailwind v4, TanStack Query, vitest).
 
 ## Design philosophy
 
@@ -39,7 +39,7 @@ depend on them, tests mock them with `AsyncMock(spec=...)`, Postgres adapters
 implement them. Keep the seam; don't add interfaces speculatively.
 
 Frontend (`frontend/src/`):
-- `views/` (routes), `components/` (UI primitives in `components/ui/`), `composables/` (server-state hooks), `domain/` (pure logic), `api/client.ts` (typed client), `router/`.
+- `views/` (routes), `components/` (reusable UI), `composables/` (server-state hooks), `domain/` (pure logic), `api/client.ts` (typed client), `router/`.
 - `domain/api.ts` is GENERATED from `openapi.json` via `npm run generate:api` — never hand-edit; regenerate after backend API changes.
 - Specs live next to their code in `__tests__/`.
 

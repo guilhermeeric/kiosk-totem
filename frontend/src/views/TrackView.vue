@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 
 import { statusInfo } from '../domain/orderStatus'
-import { useOrder } from '../composables/usePayment'
+import { useOrder } from '../composables/useOrder'
 
 const props = defineProps<{ id: string }>()
 

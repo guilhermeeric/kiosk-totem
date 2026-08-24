@@ -15,7 +15,7 @@ const orderRef = ref<{
 const isPending = ref(false)
 const errorRef = ref<unknown>(null)
 
-vi.mock('../../composables/usePayment', () => ({ useOrder }))
+vi.mock('../../composables/useOrder', () => ({ useOrder }))
 
 function mountView() {
   return mount(TrackView, { props: { id: '42' } })

@@ -124,7 +124,7 @@ backend/src/
 
 frontend/src/
 ├── api/                  # Typed HTTP client
-├── components/           # Reusable UI components (shadcn-vue in components/ui/)
+├── components/           # Reusable UI components
 ├── composables/          # Server-state hooks (TanStack Query)
 ├── domain/               # Frontend domain logic (money, order status, stock)
 ├── router/
@@ -158,14 +158,13 @@ FastAPI → OpenAPI → Generated TypeScript types (npm run generate:api)
 
 Backend: Python, FastAPI, asyncpg, PostgreSQL, Liquibase, segno (QR)
 
-Frontend: Vue 3, TypeScript, Vite, Tailwind CSS, shadcn-vue, TanStack Query, Vue Router, Lucide
+Frontend: Vue 3, TypeScript, Vite, Tailwind CSS, TanStack Query, Vue Router, Lucide
 
 ## Scope
 
 Intentionally not implemented:
 
 - Authentication and customer accounts (the session id is the capability; the totem is a public device)
-- Real payment provider integration
 - WebSockets / push notifications (the kitchen, visor, and tracking screens poll instead)
 - Complex kitchen workflows (routing, multi-tenant, refunds)
 
