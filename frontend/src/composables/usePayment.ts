@@ -17,11 +17,12 @@ export function usePayment() {
   return { paymentMutation }
 }
 
-/** Receipt: an order with its payment attempts. */
-export function useOrder(orderId: number | null) {
+/** Receipt: an order with its payment attempts. Polls when given an interval. */
+export function useOrder(orderId: number | null, refetchIntervalMs?: number) {
   return useQuery({
     queryKey: ['order', orderId],
     queryFn: () => api.getOrder(orderId as number),
     enabled: () => orderId != null,
+    refetchInterval: refetchIntervalMs ?? false,
   })
 }
