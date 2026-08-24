@@ -165,7 +165,7 @@ Stock is consumed during checkout inside the same transaction that creates the o
 
 ### Payments
 
-An order can have multiple payment attempts, but only one can succeed:
+An order is created with its payment in the same transaction: PAID, or nothing — a declined payment rolls the checkout back. The database enforces that only one attempt can ever reach PAID:
 
 ```sql
 CREATE UNIQUE INDEX one_paid_attempt_per_order
@@ -173,7 +173,7 @@ ON payments(order_id)
 WHERE status = 'PAID';
 ```
 
-A retry after a successful payment returns the existing successful attempt.
+Repeating a PAID attempt returns the existing payment instead of inserting a new one, so the retry path is idempotent.
 
 ## Project structure
 
