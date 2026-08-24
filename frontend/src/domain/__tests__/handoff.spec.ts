@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { buildHandoffUrl, buildQrUrl, handoffMode } from '../handoff'
+import { buildHandoffUrl, buildQrUrl, buildTrackUrl, handoffMode } from '../handoff'
 
 describe('handoffMode', () => {
   it('is invalid when the session id is missing or empty', () => {
@@ -25,6 +25,14 @@ describe('buildQrUrl', () => {
   it('encodes arbitrary content into the qr endpoint', () => {
     expect(buildQrUrl('http://x/handoff/s1')).toBe(
       '/qr?content=http%3A%2F%2Fx%2Fhandoff%2Fs1',
+    )
+  })
+})
+
+describe('buildTrackUrl', () => {
+  it('builds the order tracking URL from origin and order id', () => {
+    expect(buildTrackUrl({ origin: 'http://192.168.1.50:5173', orderId: 42 })).toBe(
+      'http://192.168.1.50:5173/track/42',
     )
   })
 })

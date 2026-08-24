@@ -5,6 +5,12 @@ export function buildHandoffUrl(input: { origin: string; sessionId: string }): s
   return `${origin}/handoff/${sessionId}`
 }
 
+/** Order tracking URL — the phone opens this after scanning the receipt QR. */
+export function buildTrackUrl(input: { origin: string; orderId: number }): string {
+  const { origin, orderId } = input
+  return `${origin}/track/${orderId}`
+}
+
 /** QR image URL for arbitrary content (rendered by the backend /qr endpoint). */
 export function buildQrUrl(content: string): string {
   return `/qr?content=${encodeURIComponent(content)}`
