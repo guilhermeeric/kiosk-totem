@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { ArrowLeft } from 'lucide-vue-next'
 
 import { formatMoney } from '../domain/money'
+import { overstockedLines } from '../domain/stock'
 import { useCart } from '../composables/useCart'
 import { useCheckout } from '../composables/useCheckout'
 import { useItems } from '../composables/useItems'
@@ -12,7 +13,7 @@ import { ApiError } from '../api/client'
 const router = useRouter()
 const { cartQuery } = useCart()
 const { checkoutMutation } = useCheckout()
-const { name } = useItems()
+const { byId, name } = useItems()
 
 const customerName = ref('')
 const orderType = ref<'EAT_IN' | 'TAKEAWAY'>('EAT_IN')
@@ -23,11 +24,20 @@ const cart = cartQuery.data
 
 const total = computed(() => cart.value?.total ?? '0')
 
+// Advisory guard: a line exceeding current stock cannot be paid. The backend
+// remains the authority (it catches races the client cannot see).
+const overstocked = computed(() => overstockedLines(cart.value?.items ?? [], byId.value))
+
 function pay() {
   error.value = ''
   const trimmedName = customerName.value.trim()
   if (!trimmedName) {
     error.value = 'Please enter your name'
+    return
+  }
+  const first = overstocked.value[0]
+  if (first) {
+    error.value = `Only ${first.available} left of ${name(first.itemId)} — adjust your cart`
     return
   }
   checkoutMutation.mutate(

@@ -1,24 +1,32 @@
 from src.domain.exceptions import CartNotFound
 from src.domain.order import Order, OrderItem, OrderType
 from src.domain.payment import PaymentMethod
-from src.domain.repositories import CartRepository, OrderRepository, PaymentRepository
+from src.domain.repositories import (
+    CartRepository,
+    ItemRepository,
+    OrderRepository,
+    PaymentRepository,
+)
 from src.usecases.create_payment_attempt import CreatePaymentAttempt
 
 
 class Checkout:
     """Convert a cart into an order with its payment attempt, atomically.
 
-    The order and the (simulated) payment are created inside the same
-    transaction, so an order only ever exists once it has been paid.
+    The order, its (simulated) payment, and the stock decrement happen inside
+    the same transaction: an order only ever exists once it has been paid, and
+    stock can never be oversold.
     """
 
     def __init__(
         self,
         cart_repo: CartRepository,
+        item_repo: ItemRepository,
         order_repo: OrderRepository,
         payment_repo: PaymentRepository,
     ):
         self._cart_repo = cart_repo
+        self._item_repo = item_repo
         self._order_repo = order_repo
         self._payment_repo = payment_repo
 
@@ -51,6 +59,12 @@ class Checkout:
             ],
             total=cart.total(),
         )
+
+        # Consume stock before writing anything: on failure nothing is
+        # persisted. Lines are processed in item_id order so concurrent
+        # checkouts lock item rows consistently (no deadlock).
+        for line in sorted(order.items, key=lambda oi: oi.item_id):
+            await self._item_repo.consume_stock(line.item_id, line.quantity)
 
         await self._order_repo.create(order)
         if order.id is None:

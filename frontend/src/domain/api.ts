@@ -314,6 +314,8 @@ export interface components {
             category: string;
             /** Icon */
             icon: string;
+            /** Stock */
+            stock: number;
         };
         /** OrderItemResponse */
         OrderItemResponse: {

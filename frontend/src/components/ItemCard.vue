@@ -24,11 +24,15 @@ defineEmits<{ add: [itemId: number] }>()
         <div>
           <h3 class="text-lg font-semibold">{{ item.name }}</h3>
           <p class="text-sm text-muted-foreground">{{ formatMoney(item.price) }}</p>
+          <p v-if="item.stock === 0" class="text-sm font-semibold text-destructive">
+            Out of stock
+          </p>
         </div>
       </div>
       <button
-        class="rounded-full bg-amber-500 p-2.5 text-zinc-950 transition hover:bg-amber-400"
+        class="rounded-full bg-amber-500 p-2.5 text-zinc-950 transition hover:bg-amber-400 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
         :aria-label="`Add ${item.name}`"
+        :disabled="item.stock === 0"
         @click="$emit('add', item.id)"
       >
         <Plus class="h-6 w-6" />

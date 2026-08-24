@@ -1,5 +1,6 @@
 import asyncpg
 
+from src.domain.exceptions import ItemNotFound
 from src.domain.item import Item
 from src.domain.repositories import ItemRepository
 
@@ -10,7 +11,7 @@ class PostgresItemRepository(ItemRepository):
 
     async def get_by_id(self, item_id: int) -> Item | None:
         row = await self._conn.fetchrow(
-            "SELECT id, name, price, category, icon FROM items WHERE id = $1",
+            "SELECT id, name, price, category, icon, stock FROM items WHERE id = $1",
             item_id,
         )
         if not row:
@@ -21,11 +22,12 @@ class PostgresItemRepository(ItemRepository):
             price=row["price"],
             category=row["category"],
             icon=row["icon"],
+            stock=row["stock"],
         )
 
     async def list_all(self) -> list[Item]:
         rows = await self._conn.fetch(
-            "SELECT id, name, price, category, icon FROM items ORDER BY category, name"
+            "SELECT id, name, price, category, icon, stock FROM items ORDER BY category, name"
         )
         return [
             Item(
@@ -34,9 +36,28 @@ class PostgresItemRepository(ItemRepository):
                 price=row["price"],
                 category=row["category"],
                 icon=row["icon"],
+                stock=row["stock"],
             )
             for row in rows
         ]
+
+    async def consume_stock(self, item_id: int, quantity: int) -> None:
+        # FOR UPDATE: within the checkout transaction this row-locks the item
+        # so concurrent checkouts serialize — exactly one can consume the last
+        # unit; the loser reads the decremented stock and fails the check.
+        row = await self._conn.fetchrow(
+            "SELECT id, name, stock FROM items WHERE id = $1 FOR UPDATE",
+            item_id,
+        )
+        if row is None:
+            raise ItemNotFound(f"Item {item_id} not found")
+        if row["stock"] < quantity:
+            raise ValueError(f"Only {row['stock']} left of {row['name']}")
+        await self._conn.execute(
+            "UPDATE items SET stock = stock - $2 WHERE id = $1",
+            item_id,
+            quantity,
+        )
 
     async def add(self, item: Item) -> None:
         if item.id is not None:

@@ -871,6 +871,10 @@
           "icon": {
             "type": "string",
             "title": "Icon"
+          },
+          "stock": {
+            "type": "integer",
+            "title": "Stock"
           }
         },
         "type": "object",
@@ -879,7 +883,8 @@
           "name",
           "price",
           "category",
-          "icon"
+          "icon",
+          "stock"
         ],
         "title": "ItemResponse"
       },

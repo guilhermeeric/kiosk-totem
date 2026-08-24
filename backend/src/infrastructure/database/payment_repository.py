@@ -54,7 +54,7 @@ class PostgresPaymentRepository(PaymentRepository):
                 payment.order_id,
             )
             if row is None:
-                raise
+                raise ValueError("Payment could not be created") from None
 
         if row is None:
             raise ValueError("Payment insert returned no row")

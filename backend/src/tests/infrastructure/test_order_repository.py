@@ -109,3 +109,15 @@ async def test_loads_aggregate_with_items_and_payments():
         if cart_id is not None:
             await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)
         await conn.close()
+
+
+@pytest.mark.asyncio
+async def test_update_status_raises_when_order_missing():
+    """Consistency: 0 affected rows must raise, like every other repo method."""
+    conn = await _connect()
+    try:
+        repo = PostgresOrderRepository(conn)
+        with pytest.raises(ValueError, match="not found"):
+            await repo.update_status(999_999_999, OrderStatus.PREPARING)
+    finally:
+        await conn.close()

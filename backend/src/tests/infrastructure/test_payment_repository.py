@@ -1,4 +1,5 @@
 import os
+from unittest.mock import AsyncMock
 from uuid import uuid4
 
 import asyncpg
@@ -67,3 +68,19 @@ async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
         if cart_id is not None:
             await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)
         await conn.close()
+
+
+@pytest.mark.asyncio
+async def test_create_translates_unrecoverable_unique_violation_to_value_error():
+    """Contract: a DB unique violation must never escape as a 500. If the
+    insert violates the one-PAID index but no PAID row can be recovered,
+    the repo raises ValueError like the cart/order repos do."""
+    conn = AsyncMock()
+    conn.fetchrow.side_effect = [asyncpg.UniqueViolationError, None]
+    repo = PostgresPaymentRepository(conn)
+
+    payment = Payment(order_id=1, method=PaymentMethod.PIX)
+    payment.mark_paid()
+
+    with pytest.raises(ValueError):
+        await repo.create(payment)

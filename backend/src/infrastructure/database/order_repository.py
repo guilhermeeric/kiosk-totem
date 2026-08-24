@@ -131,7 +131,7 @@ class PostgresOrderRepository(OrderRepository):
 
     async def update_status(self, order_id: int, status: OrderStatus) -> None:
         """Update only the status of an order (kitchen/visor transitions)."""
-        await self._conn.execute(
+        result = await self._conn.execute(
             """
             UPDATE orders
             SET status = $2, updated_at = CURRENT_TIMESTAMP
@@ -140,6 +140,8 @@ class PostgresOrderRepository(OrderRepository):
             order_id,
             status.value,
         )
+        if result == "UPDATE 0":
+            raise ValueError(f"Order with id {order_id} not found")
 
     async def list_by_status(self, status: OrderStatus) -> list[Order]:
         rows = await self._conn.fetch(

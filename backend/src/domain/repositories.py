@@ -20,6 +20,17 @@ class ItemRepository(ABC):
         ...
 
     @abstractmethod
+    async def consume_stock(self, item_id: int, quantity: int) -> None:
+        """Atomically decrement an item's stock at checkout.
+
+        Raises ItemNotFound if the item does not exist, or ValueError if the
+        requested quantity exceeds the available stock. The Postgres adapter
+        row-locks the item (FOR UPDATE) so concurrent checkouts serialize:
+        exactly one can consume the last unit.
+        """
+        ...
+
+    @abstractmethod
     async def add(self, item: Item) -> None:
         """Insert a new item. Item.id must be None (BIGSERIAL assigns it)."""
         ...

@@ -11,6 +11,7 @@ class ItemResponse(BaseModel):
     price: str
     category: str
     icon: str
+    stock: int
 
     @field_validator("price", mode="before")
     @classmethod
@@ -25,4 +26,5 @@ class ItemResponse(BaseModel):
             price=item.price,
             category=item.category,
             icon=item.icon,
+            stock=item.stock,
         )

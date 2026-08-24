@@ -8,4 +8,5 @@ class Item:
     price: Decimal
     category: str
     icon: str = "plate"
+    stock: int = 0
     id: int | None = None
