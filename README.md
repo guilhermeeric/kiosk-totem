@@ -226,5 +226,7 @@ Intentionally not implemented:
 - WebSockets / push notifications
 - Complex kitchen routing
 - Refunds
+- Adding new items from the kiosk
+- Discounts
 
 The kitchen, visor, and tracking screens use polling. The update frequency here did not justify adding real-time infrastructure.
