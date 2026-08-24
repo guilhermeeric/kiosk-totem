@@ -1,8 +1,8 @@
 # AGENTS.md
 
-Instructions for AI coding agents working in this repo. Humans: the READMEs
-(`README.md`, `backend/README.md`, `frontend/README.md`) cover setup and
-endpoints; this file covers conventions and ground truth agents need.
+Instructions for AI coding agents working in this repo. Humans: the root
+`README.md` covers setup, screens, and journeys; this file covers conventions
+and ground truth agents need.
 
 ## Project
 
