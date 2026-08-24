@@ -10,9 +10,11 @@ async def get_pool() -> asyncpg.Pool:
     """Create or return the global asyncpg connection pool."""
     global _pool
     if _pool is None:
+        # Local dev default (docker-compose sets DATABASE_URL explicitly for
+        # containers, pointing at the db service host).
         database_url = os.getenv(
             "DATABASE_URL",
-            "postgresql://totem:totem@db:5432/totem",
+            "postgresql://totem:totem@localhost:5432/totem",
         )
         _pool = await asyncpg.create_pool(
             database_url,
