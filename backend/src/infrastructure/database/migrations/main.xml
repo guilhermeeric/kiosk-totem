@@ -7,11 +7,5 @@
 
     <include file="001_schema.sql" relativeToChangelogFile="true"/>
     <include file="002_seed_items.sql" relativeToChangelogFile="true"/>
-    <include file="003_one_paid_payment_index.sql" relativeToChangelogFile="true"/>
-    <include file="004_one_order_per_cart.sql" relativeToChangelogFile="true"/>
-    <include file="005_cart_handoff.sql" relativeToChangelogFile="true"/>
-    <include file="006_item_icons.sql" relativeToChangelogFile="true"/>
-    <include file="007_table_timestamps.sql" relativeToChangelogFile="true"/>
-    <include file="008_item_stock.sql" relativeToChangelogFile="true"/>
 
 </databaseChangeLog>
