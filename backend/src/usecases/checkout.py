@@ -1,6 +1,6 @@
 from src.domain.exceptions import CartNotFound
 from src.domain.order import Order, OrderItem, OrderType
-from src.domain.payment import PaymentMethod
+from src.domain.payment import PaymentMethod, PaymentStatus
 from src.domain.repositories import (
     CartRepository,
     ItemRepository,
@@ -36,6 +36,7 @@ class Checkout:
         customer_name: str,
         order_type: OrderType,
         payment_method: PaymentMethod,
+        payment_status: PaymentStatus = PaymentStatus.PAID,
     ) -> Order:
         cart = await self._cart_repo.get_by_session_id(session_id)
         if cart is None:
@@ -70,7 +71,7 @@ class Checkout:
         if order.id is None:
             raise ValueError("Order has no id; payment cannot be created")
         payment = await CreatePaymentAttempt(self._order_repo, self._payment_repo).execute(
-            order.id, payment_method
+            order.id, payment_method, payment_status
         )
         order.payments = [payment]
         return order

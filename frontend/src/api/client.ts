@@ -5,6 +5,7 @@ type ItemResponse = components['schemas']['ItemResponse']
 type OrderResponse = components['schemas']['OrderResponse']
 type OrderType = components['schemas']['OrderType']
 type PaymentMethod = components['schemas']['PaymentMethod']
+type PaymentStatus = components['schemas']['PaymentStatus']
 type PaymentResponse = components['schemas']['PaymentResponse']
 type OrderStatus = components['schemas']['OrderStatus']
 
@@ -80,16 +81,17 @@ export const api = {
     customer_name: string
     order_type: OrderType
     payment_method: PaymentMethod
+    payment_status?: PaymentStatus
   }) =>
     request<OrderResponse>('/orders', {
       method: 'POST',
       body: JSON.stringify(input),
     }),
 
-  createPayment: (orderId: number, method: PaymentMethod) =>
+  createPayment: (orderId: number, method: PaymentMethod, paymentStatus?: PaymentStatus) =>
     request<PaymentResponse>(`/orders/${orderId}/payments`, {
       method: 'POST',
-      body: JSON.stringify({ method }),
+      body: JSON.stringify({ method, payment_status: paymentStatus }),
     }),
 
   getOrder: (orderId: number) => request<OrderResponse>(`/orders/${orderId}`),

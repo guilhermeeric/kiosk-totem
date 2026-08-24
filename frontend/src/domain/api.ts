@@ -287,6 +287,8 @@ export interface components {
             customer_name: string;
             order_type: components["schemas"]["OrderType"];
             payment_method: components["schemas"]["PaymentMethod"];
+            /** @default PAID */
+            payment_status: components["schemas"]["PaymentStatus"];
         };
         /** CreateCartRequest */
         CreateCartRequest: {
@@ -296,6 +298,8 @@ export interface components {
         /** CreatePaymentRequest */
         CreatePaymentRequest: {
             method: components["schemas"]["PaymentMethod"];
+            /** @default PAID */
+            payment_status: components["schemas"]["PaymentStatus"];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -381,6 +385,11 @@ export interface components {
             /** Updated At */
             updated_at?: string | null;
         };
+        /**
+         * PaymentStatus
+         * @enum {string}
+         */
+        PaymentStatus: "PENDING" | "PAID" | "FAILED";
         /** UpdateOrderStatusRequest */
         UpdateOrderStatusRequest: {
             status: components["schemas"]["OrderStatus"];

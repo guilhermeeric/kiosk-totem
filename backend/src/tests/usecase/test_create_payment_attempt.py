@@ -49,3 +49,26 @@ async def test_create_payment_attempt_raises_when_order_missing():
     with pytest.raises(OrderNotFound, match="42"):
         await use_case.execute(42, PaymentMethod.CASH)
     payment_repo.create.assert_not_called()
+
+
+@pytest.mark.asyncio
+async def test_create_payment_attempt_declines_non_paid_outcome():
+    """Simulated decline: any outcome other than PAID rejects the payment
+    without persisting anything. The checkout transaction rolls back, so no
+    order ever exists unpaid."""
+    order_repo = AsyncMock(spec=OrderRepository)
+    payment_repo = AsyncMock(spec=PaymentRepository)
+    order_repo.get_by_id.return_value = Order(
+        id=42,
+        cart_id=3,
+        customer_name="Alice",
+        order_type=OrderType.TAKEAWAY,
+        items=[],
+        total=Decimal("23.48"),
+        status=OrderStatus.PENDING,
+    )
+
+    use_case = CreatePaymentAttempt(order_repo, payment_repo)
+    with pytest.raises(ValueError, match="Payment declined"):
+        await use_case.execute(42, PaymentMethod.CREDIT_CARD, PaymentStatus.FAILED)
+    payment_repo.create.assert_not_called()

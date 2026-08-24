@@ -9,7 +9,6 @@ from fastapi import Depends, FastAPI, HTTPException, Path, Query
 from fastapi.responses import Response
 
 from src.domain.order import OrderStatus
-from src.domain.payment import PaymentMethod
 from src.http.exceptions import register_exception_handlers
 from src.http.icons import icon_svg
 from src.http.schemas.cart import (
@@ -250,6 +249,7 @@ async def create_order(
             input_.customer_name,
             input_.order_type,
             input_.payment_method,
+            input_.payment_status,
         )
     return OrderResponse.from_domain(order)
 
@@ -314,7 +314,9 @@ async def create_payment(
     order_id: int,
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> PaymentResponse:
-    method: PaymentMethod = payload.to_domain()
+    input_ = payload.to_domain()
     repos = _repos(conn)
-    payment = await CreatePaymentAttempt(repos["order"], repos["payment"]).execute(order_id, method)
+    payment = await CreatePaymentAttempt(repos["order"], repos["payment"]).execute(
+        order_id, input_.method, input_.status
+    )
     return PaymentResponse.from_domain(payment)

@@ -5,11 +5,14 @@ import { useSession } from './useSession'
 import type { components } from '../domain/api'
 
 type PaymentMethod = components['schemas']['PaymentMethod']
+type PaymentStatus = components['schemas']['PaymentStatus']
 
 export type CheckoutInput = {
   customerName: string
   orderType: 'EAT_IN' | 'TAKEAWAY'
   paymentMethod: PaymentMethod
+  /** Simulated gateway outcome — only the debug terminal sets FAILED. */
+  paymentStatus: PaymentStatus
 }
 
 /** Checkout: convert the cart into a paid order in one atomic call. */
@@ -24,6 +27,7 @@ export function useCheckout() {
         customer_name: input.customerName,
         order_type: input.orderType,
         payment_method: input.paymentMethod,
+        payment_status: input.paymentStatus,
       }),
     onSuccess: (order) => {
       if (order.id != null) {

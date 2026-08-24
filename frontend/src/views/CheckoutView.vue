@@ -8,7 +8,7 @@ import { overstockedLines } from '../domain/stock'
 import { useCart } from '../composables/useCart'
 import { useCheckout } from '../composables/useCheckout'
 import { useItems } from '../composables/useItems'
-import { ApiError } from '../api/client'
+import PaymentTerminal from '../components/PaymentTerminal.vue'
 
 const router = useRouter()
 const { cartQuery } = useCart()
@@ -19,6 +19,12 @@ const customerName = ref('')
 const orderType = ref<'EAT_IN' | 'TAKEAWAY'>('EAT_IN')
 const paymentMethod = ref<'PIX' | 'CREDIT_CARD' | 'DEBIT_CARD' | 'CASH'>('PIX')
 const error = ref('')
+
+// Simulated payment terminal. In debug mode the operator picks the outcome;
+// otherwise payments always approve.
+const isDebug = import.meta.env.VITE_DEBUG === 'true'
+const showTerminal = ref(false)
+const terminalState = ref<'pick' | 'processing' | 'approved' | 'declined'>('pick')
 
 const cart = cartQuery.data
 
@@ -40,21 +46,41 @@ function pay() {
     error.value = `Only ${first.available} left of ${name(first.itemId)} — adjust your cart`
     return
   }
+
+  showTerminal.value = true
+  if (!isDebug) runCheckout('PAID')
+}
+
+function runCheckout(status: 'PAID' | 'FAILED') {
+  terminalState.value = 'processing'
   checkoutMutation.mutate(
     {
-      customerName: trimmedName,
+      customerName: customerName.value.trim(),
       orderType: orderType.value,
       paymentMethod: paymentMethod.value,
+      paymentStatus: status,
     },
     {
       onSuccess: (order) => {
-        router.push({ name: 'receipt', params: { id: String(order.id) } })
+        terminalState.value = 'approved'
+        window.setTimeout(() => {
+          router.push({ name: 'receipt', params: { id: String(order.id) } })
+        }, 1500)
       },
-      onError: (err: Error) => {
-        error.value = err instanceof ApiError ? err.message : 'Checkout failed'
+      onError: () => {
+        terminalState.value = 'declined'
       },
     },
   )
+}
+
+function onChoose(status: 'PAID' | 'FAILED') {
+  runCheckout(status)
+}
+
+function onRetry() {
+  terminalState.value = 'pick'
+  if (!isDebug) runCheckout('PAID')
 }
 </script>
 
@@ -78,6 +104,17 @@ function pay() {
         Back to menu
       </button>
     </p>
+
+    <template v-else-if="showTerminal">
+      <PaymentTerminal
+        :amount="total"
+        :method="paymentMethod"
+        :debug="isDebug"
+        :state="terminalState"
+        @choose="onChoose"
+        @retry="onRetry"
+      />
+    </template>
 
     <template v-else>
       <!-- Full order review: every line item, not just the total -->

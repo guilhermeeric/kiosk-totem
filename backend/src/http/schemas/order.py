@@ -4,7 +4,7 @@ from datetime import datetime
 from pydantic import BaseModel, Field
 
 from src.domain.order import Order, OrderItem, OrderStatus, OrderType
-from src.domain.payment import Payment, PaymentMethod
+from src.domain.payment import Payment, PaymentMethod, PaymentStatus
 
 
 class OrderItemResponse(BaseModel):
@@ -77,6 +77,7 @@ class CheckoutInput:
     customer_name: str
     order_type: OrderType
     payment_method: PaymentMethod
+    payment_status: PaymentStatus = PaymentStatus.PAID
 
 
 class CheckoutRequest(BaseModel):
@@ -84,6 +85,7 @@ class CheckoutRequest(BaseModel):
     customer_name: str = Field(min_length=1, max_length=100)
     order_type: OrderType
     payment_method: PaymentMethod
+    payment_status: PaymentStatus = PaymentStatus.PAID
 
     def to_domain(self) -> CheckoutInput:
         return CheckoutInput(
@@ -91,14 +93,22 @@ class CheckoutRequest(BaseModel):
             customer_name=self.customer_name,
             order_type=self.order_type,
             payment_method=self.payment_method,
+            payment_status=self.payment_status,
         )
+
+
+@dataclass(frozen=True)
+class PaymentAttemptInput:
+    method: PaymentMethod
+    status: PaymentStatus = PaymentStatus.PAID
 
 
 class CreatePaymentRequest(BaseModel):
     method: PaymentMethod
+    payment_status: PaymentStatus = PaymentStatus.PAID
 
-    def to_domain(self) -> PaymentMethod:
-        return self.method
+    def to_domain(self) -> PaymentAttemptInput:
+        return PaymentAttemptInput(method=self.method, status=self.payment_status)
 
 
 class UpdateOrderStatusRequest(BaseModel):

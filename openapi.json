@@ -799,6 +799,10 @@
           },
           "payment_method": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "payment_status": {
+            "$ref": "#/components/schemas/PaymentStatus",
+            "default": "PAID"
           }
         },
         "type": "object",
@@ -829,6 +833,10 @@
         "properties": {
           "method": {
             "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "payment_status": {
+            "$ref": "#/components/schemas/PaymentStatus",
+            "default": "PAID"
           }
         },
         "type": "object",
@@ -1088,6 +1096,15 @@
           "status"
         ],
         "title": "PaymentResponse"
+      },
+      "PaymentStatus": {
+        "type": "string",
+        "enum": [
+          "PENDING",
+          "PAID",
+          "FAILED"
+        ],
+        "title": "PaymentStatus"
       },
       "UpdateOrderStatusRequest": {
         "properties": {
