@@ -34,9 +34,9 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/migrations/*",
-    "*/http/app.py",              # FastAPI app – integration tests later
+    "*/http/app.py",              # FastAPI app – exercised end to end via the live stack
     "*/http/schemas/*",           # Pydantic schemas – basic DTOs
-    "*/infrastructure/*",         # Database adapters – integration tests later
+    "*/infrastructure/*",         # Database adapters – infra tests need a live Postgres (skip when down)
     "*/main.py",                  # Entry point – not unit-tested
     "*/__init__.py",              # Empty files
 ]
