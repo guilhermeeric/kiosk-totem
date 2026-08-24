@@ -38,6 +38,10 @@ The repository ABCs in `domain/repositories.py` are a deliberate seam: usecases
 depend on them, tests mock them with `AsyncMock(spec=...)`, Postgres adapters
 implement them. Keep the seam; don't add interfaces speculatively.
 
+Mutations run inside a `UnitOfWork` (same file): usecases open it with
+`async with`, the adapter commits on clean exit and rolls back on exceptions,
+and the HTTP layer never wraps transactions. Tests use `FakeUnitOfWork`.
+
 Frontend (`frontend/src/`):
 - `views/` (routes), `components/` (reusable UI), `composables/` (server-state hooks), `domain/` (pure logic), `api/client.ts` (typed client), `router/`.
 - `domain/api.ts` is GENERATED from `openapi.json` via `npm run generate:api` — never hand-edit; regenerate after backend API changes.

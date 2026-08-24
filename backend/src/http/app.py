@@ -30,6 +30,7 @@ from src.infrastructure.database import (
     PostgresItemRepository,
     PostgresOrderRepository,
     PostgresPaymentRepository,
+    PostgresUnitOfWork,
     close_pool,
     get_connection,
     get_pool,
@@ -139,7 +140,7 @@ async def create_cart(
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> CartResponse:
     input_ = payload.to_domain()
-    cart = await CreateCart(_repos(conn)["cart"]).execute(input_.session_id)
+    cart = await CreateCart(PostgresUnitOfWork(conn)).execute(input_.session_id)
     return CartResponse.from_domain(cart)
 
 
@@ -166,11 +167,9 @@ async def add_cart_item(
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> CartResponse:
     input_ = payload.to_domain()
-    repos = _repos(conn)
-    async with conn.transaction():
-        cart = await AddCartItem(repos["cart"], repos["item"]).execute(
-            session_id, input_.item_id, input_.quantity
-        )
+    cart = await AddCartItem(PostgresUnitOfWork(conn)).execute(
+        session_id, input_.item_id, input_.quantity
+    )
     return CartResponse.from_domain(cart)
 
 
@@ -185,8 +184,7 @@ async def remove_cart_item(
     session_id: str = _SessionPath,
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> CartResponse:
-    async with conn.transaction():
-        cart = await RemoveCartItem(_repos(conn)["cart"]).execute(session_id, item_id)
+    cart = await RemoveCartItem(PostgresUnitOfWork(conn)).execute(session_id, item_id)
     return CartResponse.from_domain(cart)
 
 
@@ -203,10 +201,9 @@ async def update_cart_item(
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> CartResponse:
     input_ = payload.to_domain()
-    async with conn.transaction():
-        cart = await UpdateCartItem(_repos(conn)["cart"]).execute(
-            session_id, item_id, input_.quantity
-        )
+    cart = await UpdateCartItem(PostgresUnitOfWork(conn)).execute(
+        session_id, item_id, input_.quantity
+    )
     return CartResponse.from_domain(cart)
 
 
@@ -240,17 +237,13 @@ async def create_order(
     conn: asyncpg.Connection = Depends(get_connection),
 ) -> OrderResponse:
     input_ = payload.to_domain()
-    repos = _repos(conn)
-    async with conn.transaction():
-        order = await Checkout(
-            repos["cart"], repos["item"], repos["order"], repos["payment"]
-        ).execute(
-            input_.session_id,
-            input_.customer_name,
-            input_.order_type,
-            input_.payment_method,
-            input_.payment_status,
-        )
+    order = await Checkout(PostgresUnitOfWork(conn)).execute(
+        input_.session_id,
+        input_.customer_name,
+        input_.order_type,
+        input_.payment_method,
+        input_.payment_status,
+    )
     return OrderResponse.from_domain(order)
 
 

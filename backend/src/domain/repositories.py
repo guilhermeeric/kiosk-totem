@@ -123,3 +123,22 @@ class PaymentRepository(ABC):
         returned instead — idempotent double-pay protection.
         """
         ...
+
+
+class UnitOfWork(ABC):
+    """Atomic scope for purchase-flow writes; exposes the write repositories.
+
+    Usecases open it with `async with`: the adapter commits on clean exit and
+    rolls back on any exception. Tests use FakeUnitOfWork.
+    """
+
+    carts: CartRepository
+    items: ItemRepository
+    orders: OrderRepository
+    payments: PaymentRepository
+
+    @abstractmethod
+    async def __aenter__(self) -> "UnitOfWork": ...
+
+    @abstractmethod
+    async def __aexit__(self, exc_type, exc, tb) -> None: ...
