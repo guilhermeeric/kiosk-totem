@@ -228,7 +228,7 @@ Intentionally not implemented:
 - Refunds
 - Adding new items from the kiosk
 - Discounts
-- Queue differentiation — eat-in and takeaway orders share one kitchen queue, and ready items do not split from items being prepared.
-- Payment retry history — a declined payment rolls the checkout back rather than record a failed attempt. The database still refuses a second PAID row per order.
+- Eat-in and takeaway orders share one kitchen queue, and ready items do not split from items being prepared.
+- Payment retry history.
 
 The kitchen, visor, and tracking screens use polling. The update frequency here did not justify adding real-time infrastructure.
