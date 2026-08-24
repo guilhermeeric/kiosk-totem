@@ -30,7 +30,7 @@ openapi: ## Regenerate the committed OpenAPI spec (openapi.json)
 build: ## Build the backend docker image
 	cd $(BACKEND) && docker compose build
 
-up: ## Bring the full stack online (db + migrations + backend)
+up: ## Bring the full stack online (db + migrations + backend + frontend)
 	cd $(BACKEND) && docker compose up -d --build
 
 down: ## Stop the stack (keeps the database volume)
