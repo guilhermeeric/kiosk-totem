@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import { ref } from 'vue'
 
@@ -53,6 +53,10 @@ beforeEach(() => {
   useOrder.mockReturnValue({ data: orderRef, isPending, error: errorRef })
 })
 
+afterEach(() => {
+  vi.unstubAllEnvs()
+})
+
 describe('ReceiptView tracking affordances', () => {
   it('renders the order number and payment status', () => {
     const wrapper = mountView()
@@ -79,5 +83,33 @@ describe('ReceiptView tracking affordances', () => {
   it('hides the track button on the kiosk (not handed off) — QR only', () => {
     const wrapper = mountView()
     expect(wrapper.find('a[href="/track/42"]').exists()).toBe(false)
+  })
+
+  it('shows the debug test affordance with the tracking URL when VITE_DEBUG is on', () => {
+    vi.stubEnv('VITE_DEBUG', 'true')
+    const wrapper = mountView()
+    expect(wrapper.text()).toContain('Test in browser (new tab)')
+    expect(wrapper.text()).toContain(`${window.location.origin}/track/42`)
+  })
+
+  it('opens the tracking URL in a new tab from debug mode', async () => {
+    vi.stubEnv('VITE_DEBUG', 'true')
+    const openSpy = vi.fn()
+    Object.defineProperty(window, 'open', { value: openSpy, writable: true })
+    const wrapper = mountView()
+
+    const debugButton = wrapper
+      .findAll('button')
+      .find((b) => b.text().includes('Test in browser'))
+    expect(debugButton).toBeDefined()
+    await debugButton!.trigger('click')
+
+    expect(openSpy).toHaveBeenCalledWith(`${window.location.origin}/track/42`, '_blank')
+  })
+
+  it('hides the debug affordance when VITE_DEBUG is off', () => {
+    vi.stubEnv('VITE_DEBUG', 'false')
+    const wrapper = mountView()
+    expect(wrapper.text()).not.toContain('Test in browser (new tab)')
   })
 })

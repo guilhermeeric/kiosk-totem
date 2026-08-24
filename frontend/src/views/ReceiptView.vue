@@ -24,6 +24,14 @@ const { cartQuery } = useCart()
 const trackUrl = buildTrackUrl({ origin: window.location.origin, orderId: Number(props.id) })
 const onPhone = () => cartQuery.data.value?.handed_off_at != null
 
+// Browser-only testing affordance, same as the handoff overlay: a new tab has
+// its own session, so it behaves like another device (the "phone").
+const isDebug = import.meta.env.VITE_DEBUG === 'true'
+
+function openTrackInBrowser() {
+  window.open(trackUrl, '_blank')
+}
+
 const DURATION_MS = 40_000
 const TICK_MS = 250
 const progress = ref(0)
@@ -106,6 +114,15 @@ function paymentKey(p: { id: number | null; method: string }): string {
       <a v-if="onPhone()" :href="'/track/' + order.id" class="text-sm font-semibold text-amber-600 underline">
         Track your order
       </a>
+      <template v-if="isDebug">
+        <button
+          class="rounded-xl border border-border bg-muted px-4 py-2 text-sm font-semibold transition hover:bg-accent"
+          @click="openTrackInBrowser"
+        >
+          Test in browser (new tab)
+        </button>
+        <p class="break-all text-center text-xs text-muted-foreground">{{ trackUrl }}</p>
+      </template>
     </div>
 
     <button
