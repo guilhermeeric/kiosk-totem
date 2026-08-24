@@ -2,7 +2,9 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+import { buildQrUrl, buildTrackUrl } from '../domain/handoff'
 import { formatMoney } from '../domain/money'
+import { useCart } from '../composables/useCart'
 import { useSession } from '../composables/useSession'
 import { useOrder } from '../composables/usePayment'
 import { useItems } from '../composables/useItems'
@@ -13,6 +15,14 @@ const router = useRouter()
 const { clearSession } = useSession()
 const { data: order } = useOrder(Number(props.id))
 const { name } = useItems()
+const { cartQuery } = useCart()
+
+// The receipt is the only moment the order id surfaces, so the tracking QR is
+// always shown. On a phone (cart handed off), a direct link is shown instead
+// of making the customer scan their own screen. 40s grace: the QR must be
+// scanned in the receipt window — the printerless kiosk tradeoff.
+const trackUrl = buildTrackUrl({ origin: window.location.origin, orderId: Number(props.id) })
+const onPhone = () => cartQuery.data.value?.handed_off_at != null
 
 const DURATION_MS = 40_000
 const TICK_MS = 250
@@ -84,6 +94,18 @@ function paymentKey(p: { id: number | null; method: string }): string {
           {{ p.status }}
         </span>
       </p>
+    </div>
+
+    <div class="flex flex-col items-center gap-3 rounded-xl border border-border bg-card p-4 shadow-sm">
+      <p class="font-semibold">Track on your phone</p>
+      <img
+        :src="buildQrUrl(trackUrl)"
+        alt="Order tracking QR"
+        class="h-44 w-44 rounded-lg bg-white p-2"
+      />
+      <a v-if="onPhone()" :href="'/track/' + order.id" class="text-sm font-semibold text-amber-600 underline">
+        Track your order
+      </a>
     </div>
 
     <button
