@@ -7,7 +7,7 @@ import { useOrder } from '../composables/usePayment'
 const props = defineProps<{ id: string }>()
 
 // Status changes are slow (minutes), so a 5s poll is plenty — same polling
-// pattern as kitchen/visor, no WebSocket.
+// approach as kitchen (5s; visor polls 3s). No WebSocket anywhere.
 const POLL_MS = 5_000
 const { data: order, isPending, error } = useOrder(Number(props.id), POLL_MS)
 

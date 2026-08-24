@@ -1,9 +1,8 @@
 """Composition root: builds the app and runs the uvicorn server.
 
-Run from the project root (backend/) as:
-    uv run --directory backend python -m src.main
-or just:
-    uv run --directory backend python src/main.py
+Run from the backend/ directory as:
+    uv run python -m src.main
+(or from the repo root: uv run --directory backend python -m src.main).
 """
 
 import os
