@@ -149,4 +149,16 @@ describe('CheckoutView simulated payment', () => {
     await terminalButton(wrapper, 'Try again').trigger('click')
     expect(wrapper.text()).toContain('Approved')
   })
+
+  it('surfaces the real error message when checkout fails for a non-payment reason', async () => {
+    checkoutMutate.mockImplementation((_input: unknown, opts: { onError?: (e: Error) => void }) => {
+      opts.onError?.(new ApiError(400, 'Only 18 left of Coffee'))
+    })
+    const wrapper = mountView()
+
+    await wrapper.find('input').setValue('Ana Paula')
+    await payButton(wrapper).trigger('click')
+
+    expect(wrapper.text()).toContain('Only 18 left of Coffee')
+  })
 })

@@ -52,6 +52,7 @@ function pay() {
 }
 
 function runCheckout(status: 'PAID' | 'FAILED') {
+  error.value = ''
   terminalState.value = 'processing'
   checkoutMutation.mutate(
     {
@@ -67,8 +68,9 @@ function runCheckout(status: 'PAID' | 'FAILED') {
           router.push({ name: 'receipt', params: { id: String(order.id) } })
         }, 1500)
       },
-      onError: () => {
+      onError: (err: Error) => {
         terminalState.value = 'declined'
+        error.value = err.message
       },
     },
   )
@@ -114,6 +116,7 @@ function onRetry() {
         @choose="onChoose"
         @retry="onRetry"
       />
+      <p v-if="error" class="text-center text-sm text-destructive">{{ error }}</p>
     </template>
 
     <template v-else>

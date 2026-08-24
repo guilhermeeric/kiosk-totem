@@ -112,4 +112,12 @@ describe('ReceiptView tracking affordances', () => {
     const wrapper = mountView()
     expect(wrapper.text()).not.toContain('Test in browser (new tab)')
   })
+
+  it('shows an error state instead of an endless loader when the order cannot be loaded', () => {
+    orderRef.value = null
+    errorRef.value = new Error('Order not found')
+    const wrapper = mountView()
+    expect(wrapper.text()).toContain('Order not found')
+    expect(wrapper.text()).not.toContain('Loading receipt')
+  })
 })

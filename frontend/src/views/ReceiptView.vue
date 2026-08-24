@@ -13,7 +13,7 @@ const props = defineProps<{ id: string }>()
 
 const router = useRouter()
 const { clearSession } = useSession()
-const { data: order } = useOrder(Number(props.id))
+const { data: order, error } = useOrder(Number(props.id))
 const { name } = useItems()
 const { cartQuery } = useCart()
 
@@ -132,5 +132,6 @@ function paymentKey(p: { id: number | null; method: string }): string {
       New order
     </button>
   </div>
+  <p v-else-if="error" class="p-6 text-muted-foreground">Order not found.</p>
   <p v-else class="p-6 text-muted-foreground">Loading receipt...</p>
 </template>
