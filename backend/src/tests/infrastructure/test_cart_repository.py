@@ -20,7 +20,7 @@ async def _connect() -> asyncpg.Connection:
 
 
 @pytest.mark.asyncio
-async def test_mark_handed_off_sets_timestamp_and_hydrates():
+async def test_mark_handed_off_sets_timestamp_and_is_one_way():
     conn = await _connect()
     cart_id = None
     try:
@@ -38,11 +38,11 @@ async def test_mark_handed_off_sets_timestamp_and_hydrates():
         assert cart is not None
         assert cart.handed_off_at is not None
 
-        # Idempotent: marking again keeps the flag set.
-        await repo.mark_handed_off(cart_id)
-        cart = await repo.get_by_session_id(session_id)
-        assert cart is not None
-        assert cart.handed_off_at is not None
+        # One-way latch: a session can be handed off at most once. Without
+        # this, a phone could "continue on phone" recursively and wipe the
+        # previous device's session.
+        with pytest.raises(ValueError, match="already handed off"):
+            await repo.mark_handed_off(cart_id)
     finally:
         if cart_id is not None:
             await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)

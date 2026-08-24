@@ -58,11 +58,21 @@ class PostgresCartRepository(CartRepository):
             )
 
     async def mark_handed_off(self, cart_id: int) -> None:
-        """Record that the session was handed off to another device (QR)."""
-        await self._conn.execute(
-            "UPDATE carts SET handed_off_at = CURRENT_TIMESTAMP WHERE id = $1",
+        """Record that the session was handed off to another device (QR).
+
+        One-way latch: a session can be handed off at most once. The conditional
+        UPDATE is atomic, so concurrent adoptions serialize at the row — the
+        second caller gets 0 rows and raises.
+        """
+        result = await self._conn.execute(
+            """
+            UPDATE carts SET handed_off_at = CURRENT_TIMESTAMP
+            WHERE id = $1 AND handed_off_at IS NULL
+            """,
             cart_id,
         )
+        if result == "UPDATE 0":
+            raise ValueError(f"Cart {cart_id} already handed off")
 
     async def update(self, cart: Cart) -> None:
         """

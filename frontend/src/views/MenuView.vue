@@ -54,6 +54,10 @@ const itemCount = computed(
 )
 
 const cartTotal = computed(() => cartQuery.data.value?.total ?? '0')
+
+// The cart marker is the role signal: null = kiosk (handoff offered),
+// set = already on a phone (no recursive continue-on-phone).
+const isHandedOff = computed(() => cartQuery.data.value?.handed_off_at != null)
 </script>
 
 <template>
@@ -64,6 +68,7 @@ const cartTotal = computed(() => cartQuery.data.value?.total ?? '0')
         <ShoppingBag class="h-6 w-6 text-amber-500" />
         <span class="text-xl font-bold">Totem</span>
         <button
+          v-if="!isHandedOff"
           class="ml-auto flex items-center gap-2 rounded-full bg-muted px-4 py-2 text-sm font-semibold transition hover:bg-accent"
           @click="showHandoff = true"
         >
