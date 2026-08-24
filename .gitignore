@@ -1,37 +1,44 @@
-# Generated .gitignore file for: Python, Vue
-# Created with FOSSA's DevOps Tools
-
-# Python
+# ---- Python (backend) ----
 __pycache__/
 *.py[cod]
 *$py.class
 .pytest_cache/
 .coverage
+.ruff_cache/
+.venv/
 venv/
 env/
-.env
-*.so
+*.egg-info
 
-# Vue
-# Add Vue-specific ignores here
+# ---- Node (frontend) ----
+node_modules/
+*.local
+*.tsbuildinfo
 
-# Common
-.DS_Store
-Thumbs.db
-*.log
-*.bak
-*.tmp
+# ---- Build artifacts ----
+dist/
+
+# ---- Editor / IDE ----
+.vscode/*
+!.vscode/extensions.json
+.idea/
 *.swp
 *~
 
-# IDE and editor generated files
-.idea/
-*.sublime-*
+# ---- OS ----
+.DS_Store
+Thumbs.db
 
-# Local environment files
+# ---- Logs ----
+*.log
+
+# ---- Local environment & secrets ----
 .env
 .env.local
 .env.*.local
 
-# Machine-local tool config
+# ---- Machine-local tool config ----
 mise.toml
+
+# ---- Agent tooling (Hermes plans, scratch) ----
+.hermes/
