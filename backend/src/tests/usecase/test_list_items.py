@@ -8,7 +8,6 @@ from src.domain.repositories import ItemRepository
 from src.usecases.list_items import ListItems
 
 
-@pytest.mark.asyncio
 async def test_list_items_returns_items():
     # Create a mock repository that returns a list of items
     mock_repo = AsyncMock(spec=ItemRepository)
@@ -25,7 +24,6 @@ async def test_list_items_returns_items():
     mock_repo.list_all.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_list_items_empty():
     mock_repo = AsyncMock(spec=ItemRepository)
     mock_repo.list_all.return_value = []
@@ -37,7 +35,6 @@ async def test_list_items_empty():
     mock_repo.list_all.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_list_items_repository_error_propagates():
     mock_repo = AsyncMock(spec=ItemRepository)
     mock_repo.list_all.side_effect = Exception("DB error")

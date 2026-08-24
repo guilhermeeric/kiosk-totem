@@ -21,7 +21,6 @@ def _pending_order(order_id: int = 42) -> Order:
     )
 
 
-@pytest.mark.asyncio
 async def test_transition_pending_to_preparing():
     order_repo = AsyncMock(spec=OrderRepository)
     order_repo.get_by_id.return_value = _pending_order()
@@ -32,7 +31,6 @@ async def test_transition_pending_to_preparing():
     order_repo.update_status.assert_called_once_with(42, OrderStatus.PREPARING)
 
 
-@pytest.mark.asyncio
 async def test_transition_preparing_to_ready():
     order_repo = AsyncMock(spec=OrderRepository)
     order_repo.get_by_id.return_value = _pending_order()
@@ -47,7 +45,6 @@ async def test_transition_preparing_to_ready():
     order_repo.update_status.assert_called_with(42, OrderStatus.READY)
 
 
-@pytest.mark.asyncio
 async def test_transition_ready_to_completed():
     order_repo = AsyncMock(spec=OrderRepository)
     order = _pending_order()
@@ -62,7 +59,6 @@ async def test_transition_ready_to_completed():
     order_repo.update_status.assert_called_with(42, OrderStatus.COMPLETED)
 
 
-@pytest.mark.asyncio
 async def test_illegal_jump_pending_to_ready_raises():
     order_repo = AsyncMock(spec=OrderRepository)
     order_repo.get_by_id.return_value = _pending_order()
@@ -72,7 +68,6 @@ async def test_illegal_jump_pending_to_ready_raises():
     order_repo.update_status.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_transition_to_pending_raises():
     order_repo = AsyncMock(spec=OrderRepository)
     order_repo.get_by_id.return_value = _pending_order()
@@ -82,7 +77,6 @@ async def test_transition_to_pending_raises():
     order_repo.update_status.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_transition_raises_when_order_missing():
     order_repo = AsyncMock(spec=OrderRepository)
     order_repo.get_by_id.return_value = None

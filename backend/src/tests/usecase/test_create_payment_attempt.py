@@ -10,7 +10,6 @@ from src.domain.repositories import OrderRepository, PaymentRepository
 from src.usecases.create_payment_attempt import CreatePaymentAttempt
 
 
-@pytest.mark.asyncio
 async def test_create_payment_attempt_pays_order():
     order_repo = AsyncMock(spec=OrderRepository)
     payment_repo = AsyncMock(spec=PaymentRepository)
@@ -39,7 +38,6 @@ async def test_create_payment_attempt_pays_order():
     payment_repo.create.assert_called_once()
 
 
-@pytest.mark.asyncio
 async def test_create_payment_attempt_raises_when_order_missing():
     order_repo = AsyncMock(spec=OrderRepository)
     payment_repo = AsyncMock(spec=PaymentRepository)
@@ -51,7 +49,6 @@ async def test_create_payment_attempt_raises_when_order_missing():
     payment_repo.create.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_create_payment_attempt_declines_non_paid_outcome():
     """Simulated decline: any outcome other than PAID rejects the payment
     without persisting anything. The checkout transaction rolls back, so no

@@ -19,7 +19,6 @@ async def _connect() -> asyncpg.Connection:
         pytest.skip(f"database unavailable: {exc}")
 
 
-@pytest.mark.asyncio
 async def test_mark_handed_off_sets_timestamp_and_is_one_way():
     conn = await _connect()
     cart_id = None

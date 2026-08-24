@@ -20,7 +20,6 @@ async def _connect() -> asyncpg.Connection:
         pytest.skip(f"database unavailable: {exc}")
 
 
-@pytest.mark.asyncio
 async def test_update_status_persists_and_bumps_updated_at():
     conn = await _connect()
     cart_id = None
@@ -54,7 +53,6 @@ async def test_update_status_persists_and_bumps_updated_at():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_loads_aggregate_with_items_and_payments():
     """The order repo returns the whole aggregate: items AND payments loaded.
 
@@ -111,7 +109,6 @@ async def test_loads_aggregate_with_items_and_payments():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_update_status_raises_when_order_missing():
     """Consistency: 0 affected rows must raise, like every other repo method."""
     conn = await _connect()

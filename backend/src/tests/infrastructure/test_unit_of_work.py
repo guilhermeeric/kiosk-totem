@@ -20,7 +20,6 @@ async def _connect() -> asyncpg.Connection:
         pytest.skip(f"database unavailable: {exc}")
 
 
-@pytest.mark.asyncio
 async def test_commits_on_clean_exit():
     conn = await _connect()
     session_id = uuid4().hex
@@ -37,7 +36,6 @@ async def test_commits_on_clean_exit():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_rolls_back_on_exception():
     conn = await _connect()
     session_id = uuid4().hex

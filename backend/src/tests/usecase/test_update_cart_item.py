@@ -8,7 +8,6 @@ from src.domain.exceptions import CartNotFound
 from src.usecases.update_cart_item import UpdateCartItem
 
 
-@pytest.mark.asyncio
 async def test_update_quantity_and_persist():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -22,7 +21,6 @@ async def test_update_quantity_and_persist():
     uow.carts.update.assert_called_once_with(cart)
 
 
-@pytest.mark.asyncio
 async def test_update_quantity_to_zero_removes_item():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -35,7 +33,6 @@ async def test_update_quantity_to_zero_removes_item():
     assert result.items == []
 
 
-@pytest.mark.asyncio
 async def test_update_quantity_rejects_negative():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -47,7 +44,6 @@ async def test_update_quantity_rejects_negative():
         await use_case.execute("sess-1", 7, -1)
 
 
-@pytest.mark.asyncio
 async def test_update_quantity_rejects_item_not_in_cart():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -58,7 +54,6 @@ async def test_update_quantity_rejects_item_not_in_cart():
         await use_case.execute("sess-1", 999, 2)
 
 
-@pytest.mark.asyncio
 async def test_update_quantity_raises_when_cart_missing():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = None

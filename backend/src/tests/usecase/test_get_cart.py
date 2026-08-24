@@ -8,7 +8,6 @@ from src.domain.repositories import CartRepository
 from src.usecases.get_cart import GetCart
 
 
-@pytest.mark.asyncio
 async def test_get_cart_returns_existing_cart():
     mock_repo = AsyncMock(spec=CartRepository)
     expected = Cart(id=1, session_id="sess-1")
@@ -21,7 +20,6 @@ async def test_get_cart_returns_existing_cart():
     mock_repo.get_by_session_id.assert_called_once_with("sess-1")
 
 
-@pytest.mark.asyncio
 async def test_get_cart_raises_when_not_found():
     mock_repo = AsyncMock(spec=CartRepository)
     mock_repo.get_by_session_id.return_value = None

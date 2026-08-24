@@ -10,7 +10,6 @@ from src.domain.payment import PaymentMethod, PaymentStatus
 from src.usecases.checkout import Checkout
 
 
-@pytest.mark.asyncio
 async def test_checkout_creates_order_with_payment_attempt():
     uow = FakeUnitOfWork()
     cart = Cart(id=3, session_id="sess-1")
@@ -72,7 +71,6 @@ async def test_checkout_creates_order_with_payment_attempt():
     uow.carts.update.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_checkout_aborts_when_stock_insufficient():
     uow = FakeUnitOfWork()
     cart = Cart(id=3, session_id="sess-1")
@@ -93,7 +91,6 @@ async def test_checkout_aborts_when_stock_insufficient():
     uow.payments.create.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_checkout_rejects_empty_cart():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = Cart(id=3, session_id="sess-1")
@@ -111,7 +108,6 @@ async def test_checkout_rejects_empty_cart():
     uow.items.consume_stock.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_checkout_raises_when_cart_missing():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = None
@@ -128,7 +124,6 @@ async def test_checkout_raises_when_cart_missing():
     uow.payments.create.assert_not_called()
 
 
-@pytest.mark.asyncio
 async def test_checkout_declines_failed_payment_outcome():
     """Simulated decline at checkout: the payment rejects and the unit of
     work rolls back, so the order and stock consumption never commit — an

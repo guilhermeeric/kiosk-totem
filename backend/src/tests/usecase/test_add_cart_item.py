@@ -9,7 +9,6 @@ from src.domain.item import Item
 from src.usecases.add_cart_item import AddCartItem
 
 
-@pytest.mark.asyncio
 async def test_add_item_to_cart_and_persist():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -26,7 +25,6 @@ async def test_add_item_to_cart_and_persist():
     uow.items.get_by_id.assert_called_once_with(7)
 
 
-@pytest.mark.asyncio
 async def test_add_item_merges_existing_quantity():
     uow = FakeUnitOfWork()
     cart = Cart(id=1, session_id="sess-1")
@@ -41,7 +39,6 @@ async def test_add_item_merges_existing_quantity():
     assert cart.items[0].quantity == 3
 
 
-@pytest.mark.asyncio
 async def test_add_item_raises_when_cart_missing():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = None
@@ -51,7 +48,6 @@ async def test_add_item_raises_when_cart_missing():
         await use_case.execute("sess-ghost", 7, 1)
 
 
-@pytest.mark.asyncio
 async def test_add_item_raises_when_item_missing():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = Cart(id=1, session_id="sess-1")
@@ -62,7 +58,6 @@ async def test_add_item_raises_when_item_missing():
         await use_case.execute("sess-1", 999, 1)
 
 
-@pytest.mark.asyncio
 async def test_add_item_rejects_non_positive_quantity():
     uow = FakeUnitOfWork()
     uow.carts.get_by_session_id.return_value = Cart(id=1, session_id="sess-1")

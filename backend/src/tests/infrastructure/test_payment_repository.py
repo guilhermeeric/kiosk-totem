@@ -21,7 +21,6 @@ async def _connect() -> asyncpg.Connection:
         pytest.skip(f"database unavailable: {exc}")
 
 
-@pytest.mark.asyncio
 async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
     """Regression: INSERT ... RETURNING must include method/status so the
     persisted row hydrates (first attempt used to raise KeyError: 'method').
@@ -70,7 +69,6 @@ async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_create_translates_unrecoverable_unique_violation_to_value_error():
     """Contract: a DB unique violation must never escape as a 500. If the
     insert violates the one-PAID index but no PAID row can be recovered,

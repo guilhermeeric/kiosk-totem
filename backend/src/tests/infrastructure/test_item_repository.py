@@ -31,7 +31,6 @@ async def _insert_item(conn: asyncpg.Connection, stock: int) -> int:
     return item_id
 
 
-@pytest.mark.asyncio
 async def test_consume_stock_decrements():
     conn = await _connect()
     item_id = None
@@ -49,7 +48,6 @@ async def test_consume_stock_decrements():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_consume_stock_rejects_quantity_above_available():
     conn = await _connect()
     item_id = None
@@ -69,7 +67,6 @@ async def test_consume_stock_rejects_quantity_above_available():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_consume_stock_last_unit_can_only_be_consumed_once():
     conn = await _connect()
     item_id = None
@@ -89,7 +86,6 @@ async def test_consume_stock_last_unit_can_only_be_consumed_once():
         await conn.close()
 
 
-@pytest.mark.asyncio
 async def test_consume_stock_unknown_item_raises_not_found():
     conn = await _connect()
     try:

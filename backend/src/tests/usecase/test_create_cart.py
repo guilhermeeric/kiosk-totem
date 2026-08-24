@@ -1,11 +1,9 @@
-import pytest
 from fakes import FakeUnitOfWork
 
 from src.domain.cart import Cart
 from src.usecases.create_cart import CreateCart
 
 
-@pytest.mark.asyncio
 async def test_create_cart_returns_cart_with_assigned_id():
     uow = FakeUnitOfWork()
 

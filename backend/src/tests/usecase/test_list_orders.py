@@ -1,14 +1,11 @@
 from decimal import Decimal
 from unittest.mock import AsyncMock
 
-import pytest
-
 from src.domain.order import Order, OrderStatus, OrderType
 from src.domain.repositories import OrderRepository
 from src.usecases.list_orders import ListOrders
 
 
-@pytest.mark.asyncio
 async def test_list_orders_delegates_by_status():
     order_repo = AsyncMock(spec=OrderRepository)
     orders = [
