@@ -20,9 +20,7 @@ from src.http.schemas.cart import (
 from src.http.schemas.item import ItemResponse
 from src.http.schemas.order import (
     CheckoutRequest,
-    CreatePaymentRequest,
     OrderResponse,
-    PaymentResponse,
     UpdateOrderStatusRequest,
 )
 from src.infrastructure.database import (
@@ -38,7 +36,6 @@ from src.infrastructure.database import (
 from src.usecases.add_cart_item import AddCartItem
 from src.usecases.checkout import Checkout
 from src.usecases.create_cart import CreateCart
-from src.usecases.create_payment_attempt import CreatePaymentAttempt
 from src.usecases.get_cart import GetCart
 from src.usecases.get_order import GetOrder
 from src.usecases.list_items import ListItems
@@ -290,26 +287,3 @@ async def update_order_status(
     repos = _repos(conn)
     order = await TransitionOrderStatus(repos["order"]).execute(order_id, payload.to_domain())
     return OrderResponse.from_domain(order)
-
-
-# ---- Payments ----
-
-
-@app.post(
-    "/orders/{order_id}/payments",
-    response_model=PaymentResponse,
-    status_code=201,
-    tags=["payments"],
-    summary="Create a payment attempt (simulated)",
-)
-async def create_payment(
-    payload: CreatePaymentRequest,
-    order_id: int,
-    conn: asyncpg.Connection = Depends(get_connection),
-) -> PaymentResponse:
-    input_ = payload.to_domain()
-    repos = _repos(conn)
-    payment = await CreatePaymentAttempt(repos["order"], repos["payment"]).execute(
-        order_id, input_.method, input_.status
-    )
-    return PaymentResponse.from_domain(payment)

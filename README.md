@@ -173,7 +173,7 @@ ON payments(order_id)
 WHERE status = 'PAID';
 ```
 
-Repeating a PAID attempt returns the existing payment instead of inserting a new one, so the retry path is idempotent.
+The database refuses a second PAID row per order, so a payment can never be recorded twice.
 
 ## Project structure
 
@@ -228,5 +228,6 @@ Intentionally not implemented:
 - Refunds
 - Adding new items from the kiosk
 - Discounts
+- Payment retry history — a declined payment rolls the checkout back rather than record a failed attempt. The database still refuses a second PAID row per order.
 
 The kitchen, visor, and tracking screens use polling. The update frequency here did not justify adding real-time infrastructure.

@@ -21,10 +21,9 @@ async def _connect() -> asyncpg.Connection:
         pytest.skip(f"database unavailable: {exc}")
 
 
-async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
+async def test_create_payment_roundtrips():
     """Regression: INSERT ... RETURNING must include method/status so the
-    persisted row hydrates (first attempt used to raise KeyError: 'method').
-    A retry after a successful PAID insert must return the stored payment."""
+    persisted row hydrates (first attempt used to raise KeyError: 'method')."""
     conn = await _connect()
     cart_id = None
     order_id = None
@@ -51,15 +50,6 @@ async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
         assert payment.id is not None
         assert payment.method == PaymentMethod.PIX
         assert payment.status == PaymentStatus.PAID
-        first_id = payment.id
-
-        retry = Payment(order_id=order_id, method=PaymentMethod.PIX)
-        retry.mark_paid()
-        await repo.create(retry)
-
-        assert retry.id == first_id
-        rows = await conn.fetch("SELECT id FROM payments WHERE order_id = $1", order_id)
-        assert len(rows) == 1
     finally:
         if order_id is not None:
             await conn.execute("DELETE FROM payments WHERE order_id = $1", order_id)
@@ -69,12 +59,48 @@ async def test_create_payment_roundtrips_and_is_idempotent_for_paid():
         await conn.close()
 
 
-async def test_create_translates_unrecoverable_unique_violation_to_value_error():
-    """Contract: a DB unique violation must never escape as a 500. If the
-    insert violates the one-PAID index but no PAID row can be recovered,
-    the repo raises ValueError like the cart/order repos do."""
+async def test_one_paid_attempt_per_order_rejects_a_second_paid_row():
+    """The partial unique index (one_paid_attempt_per_order) is the DB-level
+    guarantee that a payment can never be recorded twice."""
+    conn = await _connect()
+    cart_id = None
+    order_id = None
+    try:
+        session_id = uuid4().hex
+        cart_id = await conn.fetchval(
+            "INSERT INTO carts (session_id) VALUES ($1) RETURNING id",
+            session_id,
+        )
+        order_id = await conn.fetchval(
+            "INSERT INTO orders (cart_id, customer_name, type, total) "
+            "VALUES ($1, $2, 'EAT_IN', 0) RETURNING id",
+            cart_id,
+            "Integration Test",
+        )
+
+        await conn.execute(
+            "INSERT INTO payments (order_id, method, status) VALUES ($1, 'PIX', 'PAID')",
+            order_id,
+        )
+        with pytest.raises(asyncpg.UniqueViolationError):
+            await conn.execute(
+                "INSERT INTO payments (order_id, method, status) VALUES ($1, 'PIX', 'PAID')",
+                order_id,
+            )
+    finally:
+        if order_id is not None:
+            await conn.execute("DELETE FROM payments WHERE order_id = $1", order_id)
+            await conn.execute("DELETE FROM orders WHERE id = $1", order_id)
+        if cart_id is not None:
+            await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)
+        await conn.close()
+
+
+async def test_create_translates_unique_violation_to_value_error():
+    """Contract: a DB unique violation must never escape as a 500. The repo
+    raises ValueError like the cart/order repos do."""
     conn = AsyncMock()
-    conn.fetchrow.side_effect = [asyncpg.UniqueViolationError, None]
+    conn.fetchrow.side_effect = [asyncpg.UniqueViolationError]
     repo = PostgresPaymentRepository(conn)
 
     payment = Payment(order_id=1, method=PaymentMethod.PIX)

@@ -626,58 +626,6 @@
           }
         }
       }
-    },
-    "/orders/{order_id}/payments": {
-      "post": {
-        "tags": [
-          "payments"
-        ],
-        "summary": "Create a payment attempt (simulated)",
-        "operationId": "create_payment_orders__order_id__payments_post",
-        "parameters": [
-          {
-            "name": "order_id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "integer",
-              "title": "Order Id"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreatePaymentRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Successful Response",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/PaymentResponse"
-                }
-              }
-            }
-          },
-          "422": {
-            "description": "Validation Error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/HTTPValidationError"
-                }
-              }
-            }
-          }
-        }
-      }
     }
   },
   "components": {
@@ -828,22 +776,6 @@
           "session_id"
         ],
         "title": "CreateCartRequest"
-      },
-      "CreatePaymentRequest": {
-        "properties": {
-          "method": {
-            "$ref": "#/components/schemas/PaymentMethod"
-          },
-          "payment_status": {
-            "$ref": "#/components/schemas/PaymentStatus",
-            "default": "PAID"
-          }
-        },
-        "type": "object",
-        "required": [
-          "method"
-        ],
-        "title": "CreatePaymentRequest"
       },
       "HTTPValidationError": {
         "properties": {

@@ -114,13 +114,11 @@ class PaymentRepository(ABC):
 
     @abstractmethod
     async def create(self, payment: Payment) -> None:
-        """
-        Insert a new payment attempt. Payment.id must be None; the database
+        """Insert a new payment attempt. Payment.id must be None; the database
         assigns the ID (BIGSERIAL).
 
-        If the payment is PAID and the order already has a paid attempt
-        (enforced by a partial unique index), the existing paid attempt is
-        returned instead — idempotent double-pay protection.
+        A partial unique index allows at most one PAID attempt per order; a
+        duplicate insert raises ValueError.
         """
         ...
 

@@ -227,23 +227,6 @@ export interface paths {
         patch: operations["update_order_status_orders__order_id__status_patch"];
         trace?: never;
     };
-    "/orders/{order_id}/payments": {
-        parameters: {
-            query?: never;
-            header?: never;
-            path?: never;
-            cookie?: never;
-        };
-        get?: never;
-        put?: never;
-        /** Create a payment attempt (simulated) */
-        post: operations["create_payment_orders__order_id__payments_post"];
-        delete?: never;
-        options?: never;
-        head?: never;
-        patch?: never;
-        trace?: never;
-    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -294,12 +277,6 @@ export interface components {
         CreateCartRequest: {
             /** Session Id */
             session_id: string;
-        };
-        /** CreatePaymentRequest */
-        CreatePaymentRequest: {
-            method: components["schemas"]["PaymentMethod"];
-            /** @default PAID */
-            payment_status: components["schemas"]["PaymentStatus"];
         };
         /** HTTPValidationError */
         HTTPValidationError: {
@@ -860,41 +837,6 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["OrderResponse"];
-                };
-            };
-            /** @description Validation Error */
-            422: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["HTTPValidationError"];
-                };
-            };
-        };
-    };
-    create_payment_orders__order_id__payments_post: {
-        parameters: {
-            query?: never;
-            header?: never;
-            path: {
-                order_id: number;
-            };
-            cookie?: never;
-        };
-        requestBody: {
-            content: {
-                "application/json": components["schemas"]["CreatePaymentRequest"];
-            };
-        };
-        responses: {
-            /** @description Successful Response */
-            201: {
-                headers: {
-                    [name: string]: unknown;
-                };
-                content: {
-                    "application/json": components["schemas"]["PaymentResponse"];
                 };
             };
             /** @description Validation Error */

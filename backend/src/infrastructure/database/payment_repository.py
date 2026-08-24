@@ -23,12 +23,10 @@ class PostgresPaymentRepository(PaymentRepository):
         self._conn = conn
 
     async def create(self, payment: Payment) -> None:
-        """
-        Insert a new payment attempt. Payment.id must be None.
+        """Insert a new payment attempt. Payment.id must be None.
 
-        A partial unique index allows at most one PAID attempt per order; if a
-        PAID attempt already exists, the existing row is loaded onto the passed
-        payment and no insert happens (idempotent double-pay protection).
+        A partial unique index allows at most one PAID attempt per order; a
+        duplicate insert raises ValueError like the other repos.
         """
         if payment.id is not None:
             raise ValueError("Cannot create a payment with an existing ID.")
@@ -45,22 +43,12 @@ class PostgresPaymentRepository(PaymentRepository):
                 payment.status.value,
             )
         except asyncpg.UniqueViolationError:
-            row = await self._conn.fetchrow(
-                """
-                SELECT id, order_id, method, status, created_at, updated_at
-                FROM payments
-                WHERE order_id = $1 AND status = 'PAID'
-                """,
-                payment.order_id,
-            )
-            if row is None:
-                raise ValueError("Payment could not be created") from None
+            raise ValueError("Payment could not be created") from None
 
         if row is None:
             raise ValueError("Payment insert returned no row")
-        # Hydrate the full persisted row so the returned payment reflects what
-        # is stored (the idempotent path must not report the new attempt's
-        # method when the existing PAID attempt used a different one).
+        # Hydrate the persisted row so the returned payment reflects what is
+        # stored, not just what was sent.
         hydrated = payment_from_row(row)
         payment.id = hydrated.id
         payment.method = hydrated.method
