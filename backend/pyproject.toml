@@ -17,6 +17,7 @@ dev = [
     "pytest>=8.0.0",
     "pytest-asyncio>=0.24.0",
     "pytest-cov>=6.0.0",
+    "httpx>=0.28.1",
 ]
 
 [build-system]
@@ -34,7 +35,7 @@ source = ["src"]
 omit = [
     "*/tests/*",
     "*/migrations/*",
-    "*/http/app.py",              # FastAPI app – exercised end to end via the live stack
+    "*/http/app.py",              # FastAPI app – exercised via ASGI tests and the live stack
     "*/http/schemas/*",           # Pydantic schemas – basic DTOs
     "*/infrastructure/*",         # Database adapters – infra tests need a live Postgres (skip when down)
     "*/main.py",                  # Entry point – not unit-tested

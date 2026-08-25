@@ -97,6 +97,18 @@ describe('CheckoutView name at payment', () => {
       paymentStatus: 'PAID',
     })
   })
+
+  it('removes Pay once the terminal is up — no double submit', async () => {
+    const wrapper = mountView()
+
+    await wrapper.find('input').setValue('Ana Paula')
+    await payButton(wrapper).trigger('click')
+
+    expect(checkoutMutate).toHaveBeenCalledTimes(1)
+    const payButtonAfter = wrapper.findAll('button').find((b) => b.text().startsWith('Pay'))
+    expect(payButtonAfter).toBeUndefined()
+    expect(wrapper.text()).toContain('APPROVING')
+  })
 })
 
 describe('CheckoutView stock guard', () => {
