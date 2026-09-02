@@ -54,6 +54,7 @@ async def test_create_and_update_roundtrip_coupon_columns():
     conn = await _connect()
     cart_id = None
     coupon_code = None
+    other_code = None
     try:
         coupon_code = f"CT{uuid4().hex[:8].upper()}"
         await conn.execute(
@@ -102,6 +103,7 @@ async def test_create_and_update_roundtrip_coupon_columns():
     finally:
         if cart_id is not None:
             await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)
-        if coupon_code is not None:
-            await conn.execute("DELETE FROM coupons WHERE coupon_code = $1", coupon_code)
+        for code in (coupon_code, other_code):
+            if code is not None:
+                await conn.execute("DELETE FROM coupons WHERE coupon_code = $1", code)
         await conn.close()
