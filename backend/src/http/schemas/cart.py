@@ -27,6 +27,9 @@ class CartResponse(BaseModel):
     session_id: str
     items: list[CartItemResponse]
     total: str
+    coupon_code: str | None = None
+    discount: str = "0.00"  # effective granted discount (proportional)
+    subtotal: str
     handed_off_at: datetime | None = None
 
     @classmethod
@@ -36,6 +39,9 @@ class CartResponse(BaseModel):
             session_id=cart.session_id,
             items=[CartItemResponse.from_domain(ci) for ci in cart.items],
             total=str(cart.total()),
+            coupon_code=cart.coupon_code,
+            discount=str(cart.discount()),
+            subtotal=str(cart.subtotal()),
             handed_off_at=cart.handed_off_at,
         )
 
@@ -76,3 +82,18 @@ class UpdateQuantityRequest(BaseModel):
 
     def to_domain(self) -> UpdateQuantityInput:
         return UpdateQuantityInput(quantity=self.quantity)
+
+
+@dataclass(frozen=True)
+class ApplyCouponInput:
+    coupon_code: str
+
+
+class ApplyCouponRequest(BaseModel):
+    coupon_code: str = Field(min_length=1, max_length=255)
+
+    def to_domain(self) -> ApplyCouponInput:
+        code = self.coupon_code.strip().upper()
+        if not code:
+            raise ValueError("Coupon code cannot be empty")
+        return ApplyCouponInput(coupon_code=code)

@@ -50,6 +50,8 @@ class OrderResponse(BaseModel):
     order_type: str
     status: str
     total: str
+    coupon_code: str | None = None
+    discount: str = "0.00"  # discount granted at checkout (redemption snapshot)
     created_at: datetime | None = None
     updated_at: datetime | None = None
     items: list[OrderItemResponse]
@@ -64,6 +66,8 @@ class OrderResponse(BaseModel):
             order_type=order.order_type.value,
             status=order.status.value,
             total=str(order.total),
+            coupon_code=order.coupon_code,
+            discount=str(order.coupon_discount),
             created_at=order.created_at,
             updated_at=order.updated_at,
             items=[OrderItemResponse.from_domain(oi) for oi in order.items],

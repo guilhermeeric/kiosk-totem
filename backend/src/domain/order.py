@@ -36,6 +36,8 @@ class Order:
     order_type: OrderType
     items: list[OrderItem]
     total: Decimal
+    coupon_code: str | None = None
+    coupon_discount: Decimal = Decimal("0")  # discount actually granted at checkout
     status: OrderStatus = OrderStatus.PENDING
     created_at: datetime | None = None
     updated_at: datetime | None = None

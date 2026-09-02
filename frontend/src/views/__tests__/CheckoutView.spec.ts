@@ -10,6 +10,9 @@ const push = vi.fn()
 const cartData = ref<{
   items: { item_id: number; quantity: number; unit_price: string; total: string }[]
   total: string
+  subtotal?: string
+  coupon_code?: string | null
+  discount?: string
 }>({
   items: [{ item_id: 1, quantity: 1, unit_price: '10.00', total: '10.00' }],
   total: '10.00',
@@ -125,6 +128,23 @@ describe('CheckoutView stock guard', () => {
 
     expect(checkoutMutate).not.toHaveBeenCalled()
     expect(wrapper.text()).toContain('Only 2 left of Coffee')
+  })
+})
+
+describe('CheckoutView coupon summary', () => {
+  it('shows subtotal, coupon discount and discounted total', async () => {
+    cartData.value = {
+      items: [{ item_id: 1, quantity: 1, unit_price: '10.00', total: '10.00' }],
+      subtotal: '10.00',
+      coupon_code: 'WELCOME10',
+      discount: '5.00',
+      total: '5.00',
+    }
+    const wrapper = mountView()
+
+    expect(wrapper.text()).toContain('Subtotal')
+    expect(wrapper.text()).toContain('Coupon (WELCOME10)')
+    expect(payButton(wrapper).text()).toMatch(/R\$\s*5,00/)
   })
 })
 

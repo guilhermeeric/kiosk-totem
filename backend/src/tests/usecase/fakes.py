@@ -2,6 +2,7 @@ from unittest.mock import AsyncMock
 
 from src.domain.repositories import (
     CartRepository,
+    CouponRepository,
     ItemRepository,
     OrderRepository,
     PaymentRepository,
@@ -15,6 +16,7 @@ class FakeUnitOfWork(UnitOfWork):
         self.items = AsyncMock(spec=ItemRepository)
         self.orders = AsyncMock(spec=OrderRepository)
         self.payments = AsyncMock(spec=PaymentRepository)
+        self.coupons = AsyncMock(spec=CouponRepository)
 
     async def __aenter__(self) -> "FakeUnitOfWork":
         return self

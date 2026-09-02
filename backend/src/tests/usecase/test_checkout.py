@@ -148,3 +148,155 @@ async def test_checkout_declines_failed_payment_outcome():
             payment_status=PaymentStatus.FAILED,
         )
     uow.payments.create.assert_not_called()
+
+
+async def _setup_paid_checkout(cart: Cart) -> FakeUnitOfWork:
+    """Shared plumbing: order create assigns id 42, and the payment attempt
+    always pays (its order re-fetch returns the created one)."""
+    uow = FakeUnitOfWork()
+    uow.carts.get_by_session_id.return_value = cart
+
+    async def fake_create(order: Order) -> None:
+        order.id = 42
+
+    uow.orders.create.side_effect = fake_create
+    uow.orders.get_by_id.return_value = Order(
+        id=42,
+        cart_id=cart.id or 0,
+        customer_name="Alice",
+        order_type=OrderType.EAT_IN,
+        items=[],
+        total=Decimal("0"),
+    )
+    return uow
+
+
+async def test_checkout_with_coupon_snapshots_code_and_granted_discount():
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    cart.apply_coupon("WELCOME10", 10)
+    uow = await _setup_paid_checkout(cart)
+
+    order = await Checkout(uow).execute(
+        "sess-1",
+        customer_name="Alice",
+        order_type=OrderType.EAT_IN,
+        payment_method=PaymentMethod.PIX,
+    )
+
+    # 10% of 9.99 = 0.999, rounded half-up to 1.00.
+    assert order.coupon_code == "WELCOME10"
+    assert order.coupon_discount == Decimal("1.00")
+    assert order.total == Decimal("8.99")
+    assert sum(oi.total() for oi in order.items) - order.coupon_discount == order.total
+
+
+async def test_checkout_honors_applied_coupon_without_revalidation():
+    # An applied coupon is honored even if it has since expired: checkout never
+    # re-reads the coupon row — redemption is the only coupons call, and it is
+    # a decrement, not a validation.
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    uow = await _setup_paid_checkout(cart)
+
+    order = await Checkout(uow).execute(
+        "sess-1",
+        customer_name="Alice",
+        order_type=OrderType.EAT_IN,
+        payment_method=PaymentMethod.PIX,
+    )
+
+    assert order.coupon_code == "WELCOME10"
+    assert order.coupon_discount == Decimal("1.00")
+    uow.coupons.get_by_code.assert_not_awaited()
+
+
+async def test_checkout_consumes_coupon_use_after_payment():
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    cart.apply_coupon("WELCOME10", 10)
+    uow = await _setup_paid_checkout(cart)
+
+    # Record the call sequence across the two repos: redemption must be a
+    # paid-event side effect, strictly after the payment attempt was created.
+    events: list[str] = []
+
+    async def record_payment(payment) -> None:
+        events.append("payment")
+
+    async def record_consume(coupon_code: str) -> None:
+        events.append("consume")
+
+    uow.payments.create.side_effect = record_payment
+    uow.coupons.consume.side_effect = record_consume
+
+    await Checkout(uow).execute(
+        "sess-1",
+        customer_name="Alice",
+        order_type=OrderType.EAT_IN,
+        payment_method=PaymentMethod.PIX,
+    )
+
+    uow.coupons.consume.assert_awaited_once_with("WELCOME10")
+    assert events == ["payment", "consume"]
+
+
+async def test_checkout_declined_payment_never_consumes_coupon_use():
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    cart.apply_coupon("WELCOME10", 10)
+    uow = await _setup_paid_checkout(cart)
+
+    with pytest.raises(ValueError, match="Payment declined"):
+        await Checkout(uow).execute(
+            "sess-1",
+            customer_name="Alice",
+            order_type=OrderType.EAT_IN,
+            payment_method=PaymentMethod.PIX,
+            payment_status=PaymentStatus.FAILED,
+        )
+
+    # Not paid, not redeemed: no coupon use may be consumed for an order that
+    # never got paid.
+    uow.coupons.consume.assert_not_awaited()
+
+
+async def test_checkout_exhausted_coupon_use_aborts_order():
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    cart.apply_coupon("WELCOME10", 10)
+    uow = await _setup_paid_checkout(cart)
+    uow.coupons.consume.side_effect = ValueError("Coupon 'WELCOME10' has no remaining uses")
+
+    with pytest.raises(ValueError, match="no remaining uses"):
+        await Checkout(uow).execute(
+            "sess-1",
+            customer_name="Alice",
+            order_type=OrderType.EAT_IN,
+            payment_method=PaymentMethod.PIX,
+        )
+
+    # Order and payment rows were written before the redemption, but the
+    # exception propagates; the real PostgresUnitOfWork rolls the whole
+    # transaction back, so nothing partial survives.
+    uow.orders.create.assert_awaited_once()
+    uow.payments.create.assert_awaited_once()
+
+
+async def test_checkout_without_coupon_never_touches_coupons():
+    cart = Cart(id=3, session_id="sess-1")
+    cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
+    uow = await _setup_paid_checkout(cart)
+
+    order = await Checkout(uow).execute(
+        "sess-1",
+        customer_name="Alice",
+        order_type=OrderType.EAT_IN,
+        payment_method=PaymentMethod.PIX,
+    )
+
+    assert order.coupon_code is None
+    assert order.coupon_discount == Decimal("0")
+    assert order.total == Decimal("9.99")
+    uow.coupons.consume.assert_not_awaited()

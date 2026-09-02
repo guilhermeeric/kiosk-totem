@@ -45,7 +45,9 @@ class Checkout:
                     )
                     for ci in cart.items
                 ],
-                total=cart.total(),
+                total=cart.subtotal() - cart.discount(),
+                coupon_code=cart.coupon_code,
+                coupon_discount=cart.discount(),
             )
 
             # Consume stock before writing anything: on failure nothing is
@@ -60,5 +62,13 @@ class Checkout:
             payment = await CreatePaymentAttempt(uow.orders, uow.payments).execute(
                 order.id, payment_method, payment_status
             )
+            # Coupon redemption is a paid-event side effect: consume the use
+            # only now, after the payment succeeded, inside this transaction.
+            # A failed consume (a concurrent checkout took the last use) rolls
+            # back the order, the payment, and the stock — a paid order never
+            # coexists with an unconsumed coupon use, and a coupon is never
+            # redeemed more times than its quantity.
+            if cart.coupon_code is not None:
+                await uow.coupons.consume(cart.coupon_code)
             order.payments = [payment]
             return order

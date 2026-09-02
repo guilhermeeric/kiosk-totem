@@ -12,6 +12,7 @@ from src.domain.order import OrderStatus
 from src.http.exceptions import register_exception_handlers
 from src.http.icons import icon_svg
 from src.http.schemas.cart import (
+    ApplyCouponRequest,
     CartItemRequest,
     CartResponse,
     CreateCartRequest,
@@ -25,6 +26,7 @@ from src.http.schemas.order import (
 )
 from src.infrastructure.database import (
     PostgresCartRepository,
+    PostgresCouponRepository,
     PostgresItemRepository,
     PostgresOrderRepository,
     PostgresPaymentRepository,
@@ -34,6 +36,7 @@ from src.infrastructure.database import (
     get_pool,
 )
 from src.usecases.add_cart_item import AddCartItem
+from src.usecases.apply_coupon import ApplyCoupon
 from src.usecases.checkout import Checkout
 from src.usecases.create_cart import CreateCart
 from src.usecases.get_cart import GetCart
@@ -42,6 +45,7 @@ from src.usecases.list_items import ListItems
 from src.usecases.list_orders import ListOrders
 from src.usecases.mark_cart_handed_off import MarkCartHandedOff
 from src.usecases.remove_cart_item import RemoveCartItem
+from src.usecases.remove_coupon import RemoveCoupon
 from src.usecases.transition_order_status import TransitionOrderStatus
 from src.usecases.update_cart_item import UpdateCartItem
 
@@ -72,6 +76,7 @@ def _repos(conn: asyncpg.Connection) -> dict:
         "item": PostgresItemRepository(conn),
         "order": PostgresOrderRepository(conn),
         "payment": PostgresPaymentRepository(conn),
+        "coupon": PostgresCouponRepository(conn),
     }
 
 
@@ -201,6 +206,36 @@ async def update_cart_item(
     cart = await UpdateCartItem(PostgresUnitOfWork(conn)).execute(
         session_id, item_id, input_.quantity
     )
+    return CartResponse.from_domain(cart)
+
+
+@app.put(
+    "/carts/{session_id}/coupon",
+    response_model=CartResponse,
+    tags=["carts"],
+    summary="Apply a coupon to a cart (replaces any existing one)",
+)
+async def apply_coupon(
+    payload: ApplyCouponRequest,
+    session_id: str = _SessionPath,
+    conn: asyncpg.Connection = Depends(get_connection),
+) -> CartResponse:
+    input_ = payload.to_domain()
+    cart = await ApplyCoupon(PostgresUnitOfWork(conn)).execute(session_id, input_.coupon_code)
+    return CartResponse.from_domain(cart)
+
+
+@app.delete(
+    "/carts/{session_id}/coupon",
+    response_model=CartResponse,
+    tags=["carts"],
+    summary="Remove the applied coupon from a cart",
+)
+async def remove_coupon(
+    session_id: str = _SessionPath,
+    conn: asyncpg.Connection = Depends(get_connection),
+) -> CartResponse:
+    cart = await RemoveCoupon(PostgresUnitOfWork(conn)).execute(session_id)
     return CartResponse.from_domain(cart)
 
 

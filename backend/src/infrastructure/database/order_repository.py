@@ -17,7 +17,7 @@ class PostgresOrderRepository(OrderRepository):
             """
             SELECT
                 id, cart_id, customer_name, type, total,
-                status, created_at, updated_at
+                status, coupon_code, coupon_discount, created_at, updated_at
             FROM orders
             WHERE id = $1
             """,
@@ -33,6 +33,8 @@ class PostgresOrderRepository(OrderRepository):
             order_type=OrderType(row["type"]),
             total=row["total"],
             status=OrderStatus(row["status"]),
+            coupon_code=row["coupon_code"],
+            coupon_discount=row["coupon_discount"],
             created_at=row["created_at"],
             updated_at=row["updated_at"],
             items=[],  # filled below
@@ -54,9 +56,10 @@ class PostgresOrderRepository(OrderRepository):
             row = await self._conn.fetchrow(
                 """
                 INSERT INTO orders (
-                    cart_id, customer_name, type, total, status
+                    cart_id, customer_name, type, total, status,
+                    coupon_code, coupon_discount
                 )
-                VALUES ($1, $2, $3, $4, $5)
+                VALUES ($1, $2, $3, $4, $5, $6, $7)
                 RETURNING id, created_at, updated_at
                 """,
                 order.cart_id,
@@ -64,6 +67,8 @@ class PostgresOrderRepository(OrderRepository):
                 order.order_type.value,
                 order.total,
                 order.status.value,
+                order.coupon_code,
+                order.coupon_discount,
             )
         except asyncpg.UniqueViolationError:
             # one_order_per_cart: a cart can only be checked out once.
@@ -102,13 +107,17 @@ class PostgresOrderRepository(OrderRepository):
                 type = $2,
                 total = $3,
                 status = $4,
+                coupon_code = $5,
+                coupon_discount = $6,
                 updated_at = CURRENT_TIMESTAMP
-            WHERE id = $5
+            WHERE id = $7
             """,
             order.customer_name,
             order.order_type.value,
             order.total,
             order.status.value,
+            order.coupon_code,
+            order.coupon_discount,
             order.id,
         )
         if result == "UPDATE 0":
@@ -148,7 +157,7 @@ class PostgresOrderRepository(OrderRepository):
             """
             SELECT
                 id, cart_id, customer_name, type, total,
-                status, created_at, updated_at
+                status, coupon_code, coupon_discount, created_at, updated_at
             FROM orders
             WHERE status = $1
             ORDER BY created_at ASC
@@ -165,6 +174,8 @@ class PostgresOrderRepository(OrderRepository):
                 order_type=OrderType(row["type"]),
                 total=row["total"],
                 status=OrderStatus(row["status"]),
+                coupon_code=row["coupon_code"],
+                coupon_discount=row["coupon_discount"],
                 created_at=row["created_at"],
                 updated_at=row["updated_at"],
                 items=[],

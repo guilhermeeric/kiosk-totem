@@ -75,6 +75,17 @@ export const api = {
       body: JSON.stringify({ quantity }),
     }),
 
+  applyCoupon: (sessionId: string, couponCode: string) =>
+    request<CartResponse>(`/carts/${encodeURIComponent(sessionId)}/coupon`, {
+      method: 'PUT',
+      body: JSON.stringify({ coupon_code: couponCode }),
+    }),
+
+  removeCoupon: (sessionId: string) =>
+    request<CartResponse>(`/carts/${encodeURIComponent(sessionId)}/coupon`, {
+      method: 'DELETE',
+    }),
+
   checkout: (input: {
     session_id: string
     customer_name: string

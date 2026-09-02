@@ -158,6 +158,24 @@ export interface paths {
         patch: operations["update_cart_item_carts__session_id__items__item_id__patch"];
         trace?: never;
     };
+    "/carts/{session_id}/coupon": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Apply a coupon to a cart (replaces any existing one) */
+        put: operations["apply_coupon_carts__session_id__coupon_put"];
+        post?: never;
+        /** Remove the applied coupon from a cart */
+        delete: operations["remove_coupon_carts__session_id__coupon_delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/carts/{session_id}/handoff": {
         parameters: {
             query?: never;
@@ -231,6 +249,11 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** ApplyCouponRequest */
+        ApplyCouponRequest: {
+            /** Coupon Code */
+            coupon_code: string;
+        };
         /** CartItemRequest */
         CartItemRequest: {
             /** Item Id */
@@ -259,6 +282,15 @@ export interface components {
             items: components["schemas"]["CartItemResponse"][];
             /** Total */
             total: string;
+            /** Coupon Code */
+            coupon_code?: string | null;
+            /**
+             * Discount
+             * @default 0.00
+             */
+            discount: string;
+            /** Subtotal */
+            subtotal: string;
             /** Handed Off At */
             handed_off_at?: string | null;
         };
@@ -323,6 +355,13 @@ export interface components {
             status: string;
             /** Total */
             total: string;
+            /** Coupon Code */
+            coupon_code?: string | null;
+            /**
+             * Discount
+             * @default 0.00
+             */
+            discount: string;
             /** Created At */
             created_at?: string | null;
             /** Updated At */
@@ -670,6 +709,72 @@ export interface operations {
                 "application/json": components["schemas"]["UpdateQuantityRequest"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    apply_coupon_carts__session_id__coupon_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApplyCouponRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CartResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    remove_coupon_carts__session_id__coupon_delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                session_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             200: {
