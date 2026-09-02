@@ -108,3 +108,62 @@ def test_cart_item_count():
     cart.add_item(item1, 2)
     cart.add_item(item2, 3)
     assert cart.item_count() == 5
+
+
+def test_cart_apply_coupon_attaches_snapshot():
+    cart = Cart(id=1, session_id="sess-1")
+    item = Item(id=1, name="Burger", price=Decimal("9.99"), category="savory")
+    cart.add_item(item, 2)
+    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    assert cart.coupon_code == "WELCOME10"
+    assert cart.coupon_discount == Decimal("10.00")  # full snapshot, not clamped
+    assert cart.subtotal() == Decimal("19.98")
+    assert cart.discount() == Decimal("10.00")  # effective = min(snapshot, subtotal)
+    assert cart.total() == Decimal("9.98")
+
+
+def test_cart_discount_never_exceeds_subtotal():
+    cart = Cart(id=1, session_id="sess-1")
+    cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
+    cart.apply_coupon("BIG10", Decimal("10.00"))
+    assert cart.coupon_discount == Decimal("10.00")  # snapshot kept verbatim
+    assert cart.discount() == Decimal("2.50")  # clamp on the way out
+    assert cart.total() == Decimal("0.00")
+    assert cart.subtotal() == Decimal("2.50")
+
+
+def test_cart_discount_grows_back_after_add():
+    # snapshot stays 10.00; subtotal 2.50 -> off 2.50; add 9.99 -> subtotal 12.49 -> off 10.00
+    cart = Cart(id=1, session_id="sess-1")
+    cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
+    cart.apply_coupon("BIG10", Decimal("10.00"))
+    assert cart.total() == Decimal("0.00")
+    cart.add_item(Item(id=2, name="Burger", price=Decimal("9.99"), category="savory"), 1)
+    assert cart.subtotal() == Decimal("12.49")
+    assert cart.discount() == Decimal("10.00")
+    assert cart.total() == Decimal("2.49")
+
+
+def test_cart_apply_coupon_replaces_existing():
+    cart = Cart(id=1, session_id="sess-1")
+    cart.apply_coupon("OLDA", Decimal("5.00"))
+    cart.apply_coupon("NEWB", Decimal("10.00"))
+    assert cart.coupon_code == "NEWB"
+    assert cart.coupon_discount == Decimal("10.00")
+
+
+def test_cart_remove_coupon_clears():
+    cart = Cart(id=1, session_id="sess-1")
+    cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
+    cart.apply_coupon("BIG10", Decimal("10.00"))
+    cart.remove_coupon()
+    assert cart.coupon_code is None
+    assert cart.coupon_discount == Decimal("0")
+    assert cart.total() == cart.subtotal() == Decimal("2.50")
+
+
+def test_cart_total_without_coupon_unchanged():
+    cart = Cart(id=1, session_id="sess-1")
+    item = Item(id=1, name="Burger", price=Decimal("9.99"), category="savory")
+    cart.add_item(item, 2)
+    assert cart.total() == cart.subtotal() == Decimal("19.98")

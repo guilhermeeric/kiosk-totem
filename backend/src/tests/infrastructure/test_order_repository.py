@@ -1,10 +1,11 @@
 import os
+from decimal import Decimal
 from uuid import uuid4
 
 import asyncpg
 import pytest
 
-from src.domain.order import OrderStatus
+from src.domain.order import Order, OrderStatus, OrderType
 from src.infrastructure.database.order_repository import PostgresOrderRepository
 
 DATABASE_URL = os.getenv(
@@ -117,4 +118,54 @@ async def test_update_status_raises_when_order_missing():
         with pytest.raises(ValueError, match="not found"):
             await repo.update_status(999_999_999, OrderStatus.PREPARING)
     finally:
+        await conn.close()
+
+
+async def test_create_roundtrips_coupon_columns():
+    """Order repo persists the coupon redemption snapshot (code + granted)."""
+    conn = await _connect()
+    cart_id = None
+    order_id = None
+    coupon_code = None
+    try:
+        coupon_code = f"ORD{uuid4().hex[:8].upper()}"
+        await conn.execute(
+            "INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) "
+            "VALUES ($1, 5.00, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
+            coupon_code,
+        )
+        cart_id = await conn.fetchval(
+            "INSERT INTO carts (session_id, coupon_code, coupon_discount) "
+            "VALUES ($1, $2, 5.00) RETURNING id",
+            uuid4().hex,
+            coupon_code,
+        )
+        assert cart_id is not None
+
+        repo = PostgresOrderRepository(conn)
+        order = Order(
+            cart_id=cart_id,
+            customer_name="Coupon Test",
+            order_type=OrderType.EAT_IN,
+            items=[],
+            total=Decimal("5.00"),
+            coupon_code=coupon_code,
+            coupon_discount=Decimal("5.00"),
+        )
+        await repo.create(order)
+        order_id = order.id
+        assert order_id is not None
+
+        loaded = await repo.get_by_id(order_id)
+        assert loaded is not None
+        assert loaded.coupon_code == coupon_code
+        assert loaded.coupon_discount == Decimal("5.00")
+        assert loaded.total == Decimal("5.00")
+    finally:
+        if order_id is not None:
+            await conn.execute("DELETE FROM orders WHERE id = $1", order_id)
+        if cart_id is not None:
+            await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)
+        if coupon_code is not None:
+            await conn.execute("DELETE FROM coupons WHERE coupon_code = $1", coupon_code)
         await conn.close()

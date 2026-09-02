@@ -1,5 +1,6 @@
 from .cart_repository import PostgresCartRepository
 from .connection import close_pool, get_connection, get_pool
+from .coupon_repository import PostgresCouponRepository
 from .item_repository import PostgresItemRepository
 from .order_repository import PostgresOrderRepository
 from .payment_repository import PostgresPaymentRepository
@@ -13,5 +14,6 @@ __all__ = [
     "PostgresCartRepository",
     "PostgresOrderRepository",
     "PostgresPaymentRepository",
+    "PostgresCouponRepository",
     "PostgresUnitOfWork",
 ]

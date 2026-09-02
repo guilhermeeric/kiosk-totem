@@ -20,6 +20,8 @@ class Cart:
     session_id: str
     items: list[CartItem] = field(default_factory=list)
     handed_off_at: datetime | None = None
+    coupon_code: str | None = None
+    coupon_discount: Decimal = Decimal("0")  # snapshot of coupon value at apply
     id: int | None = None
 
     # Upper bound keeps per-item totals inside DECIMAL(10,2) for kiosk items.
@@ -67,9 +69,28 @@ class Cart:
 
         raise ValueError(f"Item {item_id} not in cart")
 
-    def total(self) -> Decimal:
-        """Compute the total price of all items in the cart."""
+    def apply_coupon(self, coupon_code: str, total_discount: Decimal) -> None:
+        """Attach a coupon snapshot. Called by Coupon.add after its rules pass;
+        re-apply replaces. No validation here — the gate owns it."""
+        self.coupon_code = coupon_code
+        self.coupon_discount = total_discount
+
+    def remove_coupon(self) -> None:
+        self.coupon_code = None
+        self.coupon_discount = Decimal("0")
+
+    def subtotal(self) -> Decimal:
+        """Sum of line prices (the full-price story)."""
         return sum(ci.total() for ci in self.items)
+
+    def discount(self) -> Decimal:
+        """Effective discount: never more than the subtotal (proportional)."""
+        subtotal = self.subtotal()
+        return self.coupon_discount if self.coupon_discount <= subtotal else subtotal
+
+    def total(self) -> Decimal:
+        """Payable total after coupon discount."""
+        return self.subtotal() - self.discount()
 
     def is_empty(self) -> bool:
         return len(self.items) == 0

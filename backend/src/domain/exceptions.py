@@ -12,3 +12,7 @@ class ItemNotFound(NotFound):
 
 class OrderNotFound(NotFound):
     """Raised when an order cannot be found."""
+
+
+class CouponNotFound(NotFound):
+    """Raised when an applied coupon code is not in the coupons table."""

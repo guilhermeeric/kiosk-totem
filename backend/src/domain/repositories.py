@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 
 from src.domain.cart import Cart
+from src.domain.coupon import Coupon
 from src.domain.item import Item
 from src.domain.order import Order, OrderStatus
 from src.domain.payment import Payment
@@ -123,6 +124,31 @@ class PaymentRepository(ABC):
         ...
 
 
+class CouponRepository(ABC):
+    """Interface for loading Coupon rows and redeeming uses.
+
+    Coupons are append-only (seed/migration); the app needs two operations:
+    look up by code at apply time, and atomically consume one paid use at
+    checkout.
+    """
+
+    @abstractmethod
+    async def get_by_code(self, coupon_code: str) -> Coupon | None:
+        """Retrieve a coupon by its code. Returns None if not found."""
+        ...
+
+    @abstractmethod
+    async def consume(self, coupon_code: str) -> None:
+        """Atomically decrement the coupon's remaining uses by one.
+
+        Called once per paid order, inside the checkout transaction after the
+        payment attempt succeeds. Raises ValueError if the coupon has no uses
+        left. The Postgres adapter row-locks the coupon (FOR UPDATE) so
+        concurrent redemptions serialize: exactly one can take the last use.
+        """
+        ...
+
+
 class UnitOfWork(ABC):
     """Atomic scope for purchase-flow writes; exposes the write repositories.
 
@@ -134,6 +160,7 @@ class UnitOfWork(ABC):
     items: ItemRepository
     orders: OrderRepository
     payments: PaymentRepository
+    coupons: CouponRepository
 
     @abstractmethod
     async def __aenter__(self) -> "UnitOfWork": ...

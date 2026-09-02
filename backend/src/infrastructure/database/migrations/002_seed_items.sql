@@ -3,7 +3,7 @@
 -- Seed menu. icon is the glyph key (see 001_schema.sql); stock is left to the
 -- column default (20), the same starting inventory every item gets.
 
--- changeset totem:12
+-- changeset totem:13
 INSERT INTO items (name, price, category, icon) VALUES
     ('Coffee', 2.50, 'beverages', 'coffee'),
     ('Iced Tea', 2.00, 'beverages', 'iced-tea'),

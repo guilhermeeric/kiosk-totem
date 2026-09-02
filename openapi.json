@@ -412,6 +412,102 @@
         }
       }
     },
+    "/carts/{session_id}/coupon": {
+      "put": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Apply a coupon to a cart (replaces any existing one)",
+        "operationId": "apply_coupon_carts__session_id__coupon_put",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyCouponRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "carts"
+        ],
+        "summary": "Remove the applied coupon from a cart",
+        "operationId": "remove_coupon_carts__session_id__coupon_delete",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 255,
+              "title": "Session Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CartResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/carts/{session_id}/handoff": {
       "post": {
         "tags": [
@@ -630,6 +726,21 @@
   },
   "components": {
     "schemas": {
+      "ApplyCouponRequest": {
+        "properties": {
+          "coupon_code": {
+            "type": "string",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Coupon Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "coupon_code"
+        ],
+        "title": "ApplyCouponRequest"
+      },
       "CartItemRequest": {
         "properties": {
           "item_id": {
@@ -706,6 +817,26 @@
             "type": "string",
             "title": "Total"
           },
+          "coupon_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coupon Code"
+          },
+          "discount": {
+            "type": "string",
+            "title": "Discount",
+            "default": "0.00"
+          },
+          "subtotal": {
+            "type": "string",
+            "title": "Subtotal"
+          },
           "handed_off_at": {
             "anyOf": [
               {
@@ -724,7 +855,8 @@
           "id",
           "session_id",
           "items",
-          "total"
+          "total",
+          "subtotal"
         ],
         "title": "CartResponse"
       },
@@ -888,6 +1020,22 @@
           "total": {
             "type": "string",
             "title": "Total"
+          },
+          "coupon_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Coupon Code"
+          },
+          "discount": {
+            "type": "string",
+            "title": "Discount",
+            "default": "0.00"
           },
           "created_at": {
             "anyOf": [
