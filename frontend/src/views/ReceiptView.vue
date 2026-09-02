@@ -88,6 +88,10 @@ function paymentKey(p: { id: number | null; method: string }): string {
         <span>{{ line.quantity }}x {{ name(line.item_id) }}</span>
         <span>{{ formatMoney(line.total) }}</span>
       </div>
+      <div v-if="order.coupon_code" class="flex justify-between text-muted-foreground">
+        <span>Coupon ({{ order.coupon_code }})</span>
+        <span>−{{ formatMoney(order.discount) }}</span>
+      </div>
       <div class="mt-2 flex justify-between border-t border-border pt-2 font-bold">
         <span>Total</span>
         <span>{{ formatMoney(order.total) }}</span>

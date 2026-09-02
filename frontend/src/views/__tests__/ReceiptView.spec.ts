@@ -11,6 +11,8 @@ const orderRef = ref<{
   customer_name: string
   order_type: string
   total: string
+  coupon_code?: string | null
+  discount?: string
   items: { item_id: number; quantity: number; total: string }[]
   payments: { id: number | null; method: string; status: string }[]
 } | null>(null)
@@ -119,5 +121,17 @@ describe('ReceiptView tracking affordances', () => {
     const wrapper = mountView()
     expect(wrapper.text()).toContain('Order not found')
     expect(wrapper.text()).not.toContain('Loading receipt')
+  })
+
+  it('shows the coupon discount line on a coupon order', () => {
+    orderRef.value = {
+      ...orderRef.value!,
+      coupon_code: 'WELCOME10',
+      discount: '5.00',
+      total: '5.00',
+    }
+    const wrapper = mountView()
+    expect(wrapper.text()).toContain('Coupon (WELCOME10)')
+    expect(wrapper.text()).toMatch(/5,00/)
   })
 })

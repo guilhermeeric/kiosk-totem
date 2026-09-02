@@ -31,5 +31,15 @@ export function useCart() {
     onSuccess: (cart) => queryClient.setQueryData(['cart', sessionId.value], cart),
   })
 
-  return { cartQuery, addItem, removeItem, updateQuantity }
+  const applyCoupon = useMutation({
+    mutationFn: (couponCode: string) => api.applyCoupon(sessionId.value, couponCode),
+    onSuccess: (cart) => queryClient.setQueryData(['cart', sessionId.value], cart),
+  })
+
+  const removeCoupon = useMutation({
+    mutationFn: () => api.removeCoupon(sessionId.value),
+    onSuccess: (cart) => queryClient.setQueryData(['cart', sessionId.value], cart),
+  })
+
+  return { cartQuery, addItem, removeItem, updateQuantity, applyCoupon, removeCoupon }
 }

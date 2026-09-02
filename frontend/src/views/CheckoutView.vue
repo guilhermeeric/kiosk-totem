@@ -127,7 +127,24 @@ function onRetry() {
           <span class="shrink-0 text-muted-foreground">{{ line.quantity }}x</span>
           <span class="shrink-0 font-medium">{{ formatMoney(line.total) }}</span>
         </div>
-        <div class="mt-2 flex justify-between border-t border-border pt-2 text-lg font-bold">
+        <template v-if="cart?.coupon_code">
+          <div class="mt-2 flex justify-between border-t border-border pt-2 text-muted-foreground">
+            <span>Subtotal</span>
+            <span>{{ formatMoney(cart.subtotal) }}</span>
+          </div>
+          <div class="flex justify-between text-muted-foreground">
+            <span>Coupon ({{ cart.coupon_code }})</span>
+            <span>−{{ formatMoney(cart.discount) }}</span>
+          </div>
+          <div class="flex justify-between text-lg font-bold">
+            <span>Total</span>
+            <span>{{ formatMoney(total) }}</span>
+          </div>
+        </template>
+        <div
+          v-else
+          class="mt-2 flex justify-between border-t border-border pt-2 text-lg font-bold"
+        >
           <span>Total</span>
           <span>{{ formatMoney(total) }}</span>
         </div>
