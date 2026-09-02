@@ -15,7 +15,7 @@ class PostgresCartRepository(CartRepository):
         # cart so concurrent read-modify-write flows serialize instead of
         # losing updates. Harmless in autocommit (read endpoints).
         row = await self._conn.fetchrow(
-            "SELECT id, session_id, handed_off_at, coupon_code, coupon_discount "
+            "SELECT id, session_id, handed_off_at, coupon_code, coupon_percent "
             "FROM carts WHERE session_id = $1 FOR UPDATE",
             session_id,
         )
@@ -27,7 +27,7 @@ class PostgresCartRepository(CartRepository):
             session_id=row["session_id"],
             handed_off_at=row["handed_off_at"],
             coupon_code=row["coupon_code"],
-            coupon_discount=row["coupon_discount"],
+            coupon_percent=row["coupon_percent"],
         )
         cart.items = await self._load_items(cart.id)
         return cart
@@ -41,11 +41,11 @@ class PostgresCartRepository(CartRepository):
             raise ValueError("Cannot create a cart with an existing ID. Use update() instead.")
         try:
             cart_id = await self._conn.fetchval(
-                "INSERT INTO carts (session_id, coupon_code, coupon_discount) "
+                "INSERT INTO carts (session_id, coupon_code, coupon_percent) "
                 "VALUES ($1, $2, $3) RETURNING id",
                 cart.session_id,
                 cart.coupon_code,
-                cart.coupon_discount,
+                cart.coupon_percent,
             )
         except asyncpg.UniqueViolationError:
             # carts.session_id is unique: one cart per session.
@@ -89,11 +89,10 @@ class PostgresCartRepository(CartRepository):
             raise ValueError("Cannot update a cart without an ID. Use create() instead.")
         # Update cart session_id (though it rarely changes) plus coupon state
         result = await self._conn.execute(
-            "UPDATE carts SET session_id = $1, coupon_code = $2, coupon_discount = $3 "
-            "WHERE id = $4",
+            "UPDATE carts SET session_id = $1, coupon_code = $2, coupon_percent = $3 WHERE id = $4",
             cart.session_id,
             cart.coupon_code,
-            cart.coupon_discount,
+            cart.coupon_percent,
             cart.id,
         )
         if result == "UPDATE 0":

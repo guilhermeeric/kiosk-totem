@@ -114,51 +114,64 @@ def test_cart_apply_coupon_attaches_snapshot():
     cart = Cart(id=1, session_id="sess-1")
     item = Item(id=1, name="Burger", price=Decimal("9.99"), category="savory")
     cart.add_item(item, 2)
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     assert cart.coupon_code == "WELCOME10"
-    assert cart.coupon_discount == Decimal("10.00")  # full snapshot, not clamped
+    assert cart.coupon_percent == 10  # snapshot is the percent, not money
     assert cart.subtotal() == Decimal("19.98")
-    assert cart.discount() == Decimal("10.00")  # effective = min(snapshot, subtotal)
-    assert cart.total() == Decimal("9.98")
+    # 10% of 19.98 = 1.998, rounded half-up to cents
+    assert cart.discount() == Decimal("2.00")
+    assert cart.total() == Decimal("17.98")
 
 
-def test_cart_discount_never_exceeds_subtotal():
+def test_cart_ten_percent_discount_rounds_half_up():
+    cart = Cart(id=1, session_id="sess-1")
+    cart.add_item(Item(id=1, name="Burger", price=Decimal("9.99"), category="savory"), 1)
+    cart.add_item(Item(id=2, name="Fries", price=Decimal("3.50"), category="savory"), 1)
+    cart.apply_coupon("WELCOME10", 10)
+    assert cart.subtotal() == Decimal("13.49")
+    assert cart.discount() == Decimal("1.35")  # 1.349 rounds half-up
+    assert cart.total() == Decimal("12.14")
+
+
+def test_cart_full_percent_coupon_never_exceeds_subtotal():
     cart = Cart(id=1, session_id="sess-1")
     cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
-    cart.apply_coupon("BIG10", Decimal("10.00"))
-    assert cart.coupon_discount == Decimal("10.00")  # snapshot kept verbatim
-    assert cart.discount() == Decimal("2.50")  # clamp on the way out
+    cart.apply_coupon("FREE", 100)
+    assert cart.coupon_percent == 100  # snapshot kept verbatim
+    assert cart.discount() == Decimal("2.50")
     assert cart.total() == Decimal("0.00")
     assert cart.subtotal() == Decimal("2.50")
 
 
-def test_cart_discount_grows_back_after_add():
-    # snapshot stays 10.00; subtotal 2.50 -> off 2.50; add 9.99 -> subtotal 12.49 -> off 10.00
+def test_cart_discount_scales_with_subtotal():
+    # percent snapshot stays 10; the money discount follows the live subtotal
     cart = Cart(id=1, session_id="sess-1")
     cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
-    cart.apply_coupon("BIG10", Decimal("10.00"))
-    assert cart.total() == Decimal("0.00")
+    cart.apply_coupon("WELCOME10", 10)
+    assert cart.discount() == Decimal("0.25")
+    assert cart.total() == Decimal("2.25")
     cart.add_item(Item(id=2, name="Burger", price=Decimal("9.99"), category="savory"), 1)
     assert cart.subtotal() == Decimal("12.49")
-    assert cart.discount() == Decimal("10.00")
-    assert cart.total() == Decimal("2.49")
+    assert cart.discount() == Decimal("1.25")  # 1.249 rounds half-up
+    assert cart.total() == Decimal("11.24")
 
 
 def test_cart_apply_coupon_replaces_existing():
     cart = Cart(id=1, session_id="sess-1")
-    cart.apply_coupon("OLDA", Decimal("5.00"))
-    cart.apply_coupon("NEWB", Decimal("10.00"))
+    cart.apply_coupon("OLDA", 5)
+    cart.apply_coupon("NEWB", 50)
     assert cart.coupon_code == "NEWB"
-    assert cart.coupon_discount == Decimal("10.00")
+    assert cart.coupon_percent == 50
 
 
 def test_cart_remove_coupon_clears():
     cart = Cart(id=1, session_id="sess-1")
     cart.add_item(Item(id=1, name="Coffee", price=Decimal("2.50"), category="beverages"), 1)
-    cart.apply_coupon("BIG10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     cart.remove_coupon()
     assert cart.coupon_code is None
-    assert cart.coupon_discount == Decimal("0")
+    assert cart.coupon_percent == 0
+    assert cart.discount() == Decimal("0.00")
     assert cart.total() == cart.subtotal() == Decimal("2.50")
 
 

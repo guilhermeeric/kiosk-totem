@@ -22,8 +22,8 @@ async def _connect() -> asyncpg.Connection:
 async def _insert_coupon(conn: asyncpg.Connection, quantity: int, code: str | None = None) -> str:
     coupon_code = code or f"TEST{uuid4().hex[:8].upper()}"
     await conn.execute(
-        "INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) "
-        "VALUES ($1, 1.00, CURRENT_TIMESTAMP + INTERVAL '1 day', $2)",
+        "INSERT INTO coupons (coupon_code, percent, expiry_time, quantity) "
+        "VALUES ($1, 7, CURRENT_TIMESTAMP + INTERVAL '1 day', $2)",
         coupon_code,
         quantity,
     )
@@ -41,7 +41,7 @@ async def test_get_by_code_returns_entity_with_all_fields():
 
         assert coupon is not None
         assert coupon.coupon_code == code
-        assert coupon.total_discount == pytest.approx(1.00)
+        assert coupon.discount_percent == 7
         assert coupon.quantity == 7
         assert coupon.expiry_time is not None
         assert coupon.created_at is not None

@@ -59,17 +59,18 @@ CREATE TABLE items (
 -- changeset totem:5
 -- Coupon = operator-issued discount code. expiry_time is the lifecycle end;
 -- there is no delete path, so expired rows simply stop validating at apply.
--- total_discount is a fixed money value (no percent, no min purchase).
+-- percent is the discount off the cart subtotal (10 = 10% off); bounded to
+-- (0, 100] so the granted discount can never exceed the cart total.
 -- quantity is the remaining paid redemptions (items.stock pattern): the
 -- checkout transaction decrements it once per paid order, after payment.
 CREATE TABLE coupons (
     coupon_code VARCHAR(255) PRIMARY KEY,
-    total_discount DECIMAL(10, 2) NOT NULL,
+    percent INTEGER NOT NULL,
     expiry_time TIMESTAMP NOT NULL,
     quantity INTEGER NOT NULL,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT coupons_discount_positive CHECK (total_discount > 0),
+    CONSTRAINT coupons_percent_in_range CHECK (percent > 0 AND percent <= 100),
     CONSTRAINT coupons_quantity_non_negative CHECK (quantity >= 0)
 );
 
@@ -80,15 +81,15 @@ CREATE TABLE coupons (
 -- marks the cart so the totem can reset immediately instead of waiting out its
 -- grace period. NULL until handed off.
 -- coupon_code references the coupon applied to this cart; carts are transient,
--- so the FK is free integrity. coupon_discount is the coupon's value
--- snapshotted at apply (may exceed the current subtotal after removals; the
--- granted amount is min(value, subtotal), computed in the domain).
+-- so the FK is free integrity. coupon_percent is the coupon's percent
+-- snapshotted at apply (10 = 10% off); the granted money discount is computed
+-- from the live subtotal in the domain, so it can never exceed the cart total.
 CREATE TABLE carts (
     id BIGSERIAL PRIMARY KEY,
     session_id VARCHAR(255) NOT NULL UNIQUE,
     handed_off_at TIMESTAMP NULL,
     coupon_code VARCHAR(255) NULL REFERENCES coupons(coupon_code),
-    coupon_discount DECIMAL(10, 2) NOT NULL DEFAULT 0,
+    coupon_percent INTEGER NOT NULL DEFAULT 0,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );

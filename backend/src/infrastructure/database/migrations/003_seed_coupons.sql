@@ -4,7 +4,7 @@
 -- the expired path naturally instead of living forever.
 
 -- changeset totem:14
-INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) VALUES
-    ('WELCOME10', 10.00, CURRENT_TIMESTAMP + INTERVAL '30 days', 100);
+INSERT INTO coupons (coupon_code, percent, expiry_time, quantity) VALUES
+    ('WELCOME10', 10, CURRENT_TIMESTAMP + INTERVAL '30 days', 100);
 
 -- rollback DELETE FROM coupons WHERE coupon_code = 'WELCOME10';

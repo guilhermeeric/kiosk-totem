@@ -1,5 +1,3 @@
-from decimal import Decimal
-
 import pytest
 from fakes import FakeUnitOfWork
 
@@ -11,14 +9,14 @@ from src.usecases.remove_coupon import RemoveCoupon
 async def test_remove_coupon_clears_and_persists():
     uow = FakeUnitOfWork()
     cart = Cart(id=3, session_id="sess-1")
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     uow.carts.get_by_session_id.return_value = cart
 
     result = await RemoveCoupon(uow).execute("sess-1")
 
     assert result is cart
     assert result.coupon_code is None
-    assert result.coupon_discount == Decimal("0")
+    assert result.coupon_percent == 0
     uow.carts.update.assert_awaited_once_with(cart)
 
 

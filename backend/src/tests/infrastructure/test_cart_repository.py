@@ -1,5 +1,4 @@
 import os
-from decimal import Decimal
 from uuid import uuid4
 
 import asyncpg
@@ -58,8 +57,8 @@ async def test_create_and_update_roundtrip_coupon_columns():
     try:
         coupon_code = f"CT{uuid4().hex[:8].upper()}"
         await conn.execute(
-            "INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) "
-            "VALUES ($1, 5.00, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
+            "INSERT INTO coupons (coupon_code, percent, expiry_time, quantity) "
+            "VALUES ($1, 5, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
             coupon_code,
         )
         repo = PostgresCartRepository(conn)
@@ -67,7 +66,7 @@ async def test_create_and_update_roundtrip_coupon_columns():
         cart = Cart(
             session_id=uuid4().hex,
             coupon_code=coupon_code,
-            coupon_discount=Decimal("5.00"),
+            coupon_percent=5,
         )
         await repo.create(cart)
         assert cart.id is not None
@@ -76,30 +75,30 @@ async def test_create_and_update_roundtrip_coupon_columns():
         loaded = await repo.get_by_session_id(cart.session_id)
         assert loaded is not None
         assert loaded.coupon_code == coupon_code
-        assert loaded.coupon_discount == Decimal("5.00")
+        assert loaded.coupon_percent == 5
 
         # Update replaces the coupon (and clearing works too).
         other_code = f"CT{uuid4().hex[:8].upper()}"
         await conn.execute(
-            "INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) "
-            "VALUES ($1, 7.00, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
+            "INSERT INTO coupons (coupon_code, percent, expiry_time, quantity) "
+            "VALUES ($1, 7, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
             other_code,
         )
         cart.coupon_code = other_code
-        cart.coupon_discount = Decimal("7.00")
+        cart.coupon_percent = 7
         await repo.update(cart)
 
         loaded = await repo.get_by_session_id(cart.session_id)
         assert loaded is not None
         assert loaded.coupon_code == other_code
-        assert loaded.coupon_discount == Decimal("7.00")
+        assert loaded.coupon_percent == 7
 
         cart.remove_coupon()
         await repo.update(cart)
         loaded = await repo.get_by_session_id(cart.session_id)
         assert loaded is not None
         assert loaded.coupon_code is None
-        assert loaded.coupon_discount == Decimal("0")
+        assert loaded.coupon_percent == 0
     finally:
         if cart_id is not None:
             await conn.execute("DELETE FROM carts WHERE id = $1", cart_id)

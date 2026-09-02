@@ -10,10 +10,10 @@ from src.domain.exceptions import CartNotFound, CouponNotFound
 from src.usecases.apply_coupon import ApplyCoupon
 
 
-def _coupon(code: str = "WELCOME10", quantity: int = 100) -> Coupon:
+def _coupon(code: str = "WELCOME10", quantity: int = 100, percent: int = 10) -> Coupon:
     return Coupon(
         coupon_code=code,
-        total_discount=Decimal("10.00"),
+        discount_percent=percent,
         expiry_time=datetime(2099, 1, 1),
         quantity=quantity,
     )
@@ -31,7 +31,7 @@ async def test_apply_valid_coupon_snapshots_and_persists():
 
     assert result is cart
     assert result.coupon_code == "WELCOME10"
-    assert result.coupon_discount == Decimal("10.00")
+    assert result.coupon_percent == 10
     uow.carts.update.assert_awaited_once_with(cart)
 
 
@@ -53,7 +53,7 @@ async def test_apply_expired_coupon_raises_and_does_not_persist():
     uow.carts.get_by_session_id.return_value = cart
     uow.coupons.get_by_code.return_value = Coupon(
         coupon_code="OLD10",
-        total_discount=Decimal("10.00"),
+        discount_percent=10,
         expiry_time=datetime(2020, 1, 1),
         quantity=100,
     )
@@ -91,12 +91,12 @@ async def test_apply_missing_cart_raises_cart_not_found():
 async def test_apply_replaces_existing_coupon():
     uow = FakeUnitOfWork()
     cart = Cart(id=3, session_id="sess-1")
-    cart.apply_coupon("OLDA", Decimal("5.00"))
+    cart.apply_coupon("OLDA", 5)
     uow.carts.get_by_session_id.return_value = cart
-    uow.coupons.get_by_code.return_value = _coupon(code="NEWB", quantity=50)
+    uow.coupons.get_by_code.return_value = _coupon(code="NEWB", quantity=50, percent=25)
 
     result = await ApplyCoupon(uow).execute("sess-1", "NEWB")
 
     assert result.coupon_code == "NEWB"
-    assert result.coupon_discount == Decimal("10.00")
+    assert result.coupon_percent == 25
     uow.carts.update.assert_awaited_once_with(cart)

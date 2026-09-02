@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from datetime import datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 
 from .item import Item
 
@@ -21,7 +21,7 @@ class Cart:
     items: list[CartItem] = field(default_factory=list)
     handed_off_at: datetime | None = None
     coupon_code: str | None = None
-    coupon_discount: Decimal = Decimal("0")  # snapshot of coupon value at apply
+    coupon_percent: int = 0  # snapshot of coupon percent at apply (10 = 10% off)
     id: int | None = None
 
     # Upper bound keeps per-item totals inside DECIMAL(10,2) for kiosk items.
@@ -69,24 +69,27 @@ class Cart:
 
         raise ValueError(f"Item {item_id} not in cart")
 
-    def apply_coupon(self, coupon_code: str, total_discount: Decimal) -> None:
+    def apply_coupon(self, coupon_code: str, discount_percent: int) -> None:
         """Attach a coupon snapshot. Called by Coupon.add after its rules pass;
         re-apply replaces. No validation here — the gate owns it."""
         self.coupon_code = coupon_code
-        self.coupon_discount = total_discount
+        self.coupon_percent = discount_percent
 
     def remove_coupon(self) -> None:
         self.coupon_code = None
-        self.coupon_discount = Decimal("0")
+        self.coupon_percent = 0
 
     def subtotal(self) -> Decimal:
         """Sum of line prices (the full-price story)."""
-        return sum(ci.total() for ci in self.items)
+        return sum((ci.total() for ci in self.items), Decimal("0"))
 
     def discount(self) -> Decimal:
-        """Effective discount: never more than the subtotal (proportional)."""
-        subtotal = self.subtotal()
-        return self.coupon_discount if self.coupon_discount <= subtotal else subtotal
+        """Effective discount: coupon percent of the subtotal, rounded half-up
+        to cents. Percent is capped at 100 at apply, so the discount can never
+        exceed the subtotal."""
+        return (self.subtotal() * self.coupon_percent / 100).quantize(
+            Decimal("0.01"), rounding=ROUND_HALF_UP
+        )
 
     def total(self) -> Decimal:
         """Payable total after coupon discount."""

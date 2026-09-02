@@ -174,7 +174,7 @@ async def _setup_paid_checkout(cart: Cart) -> FakeUnitOfWork:
 async def test_checkout_with_coupon_snapshots_code_and_granted_discount():
     cart = Cart(id=3, session_id="sess-1")
     cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     uow = await _setup_paid_checkout(cart)
 
     order = await Checkout(uow).execute(
@@ -184,10 +184,10 @@ async def test_checkout_with_coupon_snapshots_code_and_granted_discount():
         payment_method=PaymentMethod.PIX,
     )
 
-    # Granted discount clamps to the subtotal (proportional): order can be 0.00.
+    # 10% of 9.99 = 0.999, rounded half-up to 1.00.
     assert order.coupon_code == "WELCOME10"
-    assert order.coupon_discount == Decimal("9.99")
-    assert order.total == Decimal("0.00")
+    assert order.coupon_discount == Decimal("1.00")
+    assert order.total == Decimal("8.99")
     assert sum(oi.total() for oi in order.items) - order.coupon_discount == order.total
 
 
@@ -208,14 +208,14 @@ async def test_checkout_honors_applied_coupon_without_revalidation():
     )
 
     assert order.coupon_code == "WELCOME10"
-    assert order.coupon_discount == Decimal("9.99")
+    assert order.coupon_discount == Decimal("1.00")
     uow.coupons.get_by_code.assert_not_awaited()
 
 
 async def test_checkout_consumes_coupon_use_after_payment():
     cart = Cart(id=3, session_id="sess-1")
     cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     uow = await _setup_paid_checkout(cart)
 
     # Record the call sequence across the two repos: redemption must be a
@@ -245,7 +245,7 @@ async def test_checkout_consumes_coupon_use_after_payment():
 async def test_checkout_declined_payment_never_consumes_coupon_use():
     cart = Cart(id=3, session_id="sess-1")
     cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     uow = await _setup_paid_checkout(cart)
 
     with pytest.raises(ValueError, match="Payment declined"):
@@ -265,7 +265,7 @@ async def test_checkout_declined_payment_never_consumes_coupon_use():
 async def test_checkout_exhausted_coupon_use_aborts_order():
     cart = Cart(id=3, session_id="sess-1")
     cart.items = [CartItem(item_id=7, quantity=1, unit_price=Decimal("9.99"))]
-    cart.apply_coupon("WELCOME10", Decimal("10.00"))
+    cart.apply_coupon("WELCOME10", 10)
     uow = await _setup_paid_checkout(cart)
     uow.coupons.consume.side_effect = ValueError("Coupon 'WELCOME10' has no remaining uses")
 

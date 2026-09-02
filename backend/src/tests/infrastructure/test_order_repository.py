@@ -130,13 +130,13 @@ async def test_create_roundtrips_coupon_columns():
     try:
         coupon_code = f"ORD{uuid4().hex[:8].upper()}"
         await conn.execute(
-            "INSERT INTO coupons (coupon_code, total_discount, expiry_time, quantity) "
-            "VALUES ($1, 5.00, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
+            "INSERT INTO coupons (coupon_code, percent, expiry_time, quantity) "
+            "VALUES ($1, 5, CURRENT_TIMESTAMP + INTERVAL '1 day', 10)",
             coupon_code,
         )
         cart_id = await conn.fetchval(
-            "INSERT INTO carts (session_id, coupon_code, coupon_discount) "
-            "VALUES ($1, $2, 5.00) RETURNING id",
+            "INSERT INTO carts (session_id, coupon_code, coupon_percent) "
+            "VALUES ($1, $2, 5) RETURNING id",
             uuid4().hex,
             coupon_code,
         )

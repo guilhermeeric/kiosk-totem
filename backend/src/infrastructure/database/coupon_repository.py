@@ -12,7 +12,7 @@ class PostgresCouponRepository(CouponRepository):
 
     async def get_by_code(self, coupon_code: str) -> Coupon | None:
         row = await self._conn.fetchrow(
-            "SELECT coupon_code, total_discount, expiry_time, quantity, "
+            "SELECT coupon_code, percent, expiry_time, quantity, "
             "created_at, updated_at FROM coupons WHERE coupon_code = $1",
             coupon_code,
         )
@@ -20,7 +20,7 @@ class PostgresCouponRepository(CouponRepository):
             return None
         return Coupon(
             coupon_code=row["coupon_code"],
-            total_discount=row["total_discount"],
+            discount_percent=row["percent"],
             expiry_time=row["expiry_time"],
             quantity=row["quantity"],
             created_at=row["created_at"],
